@@ -17,7 +17,7 @@ class Mesh():
         avg = (max+min)/2
         amp = np.amax(max[:3]-min[:3])/2
         self.vertices = np.array([np.concatenate((((v[:3]-avg[:3])/amp), v[3:])) for v in self.vertices], np.float32)
-    
+
     def apply_matrix(self, m):
         vert = []
         for v in self.vertices:
@@ -78,8 +78,12 @@ class Mesh():
         vni = []
         vti = []
         with open(filename) as f:
-            for line in f: 
+            for line in f:
+                # print("- "+line)
                 l = line.split()
+                if len(l) == 0:
+                    # print("not read")
+                    continue
                 if l[0] == 'v' :
                     v = np.array(l[1:], np.float32)
                     tmpv.append(v)
@@ -94,11 +98,11 @@ class Mesh():
                     f2 = l[2].split('/')
                     f3 = l[3].split('/')
                     vi.append(np.array([f1[0], f2[0], f3[0]], np.uint32))
-                    if len(f3) > 1 :   
+                    if len(f3) > 1 :
                         vti.append(np.array([f1[1], f2[1], f3[1]], np.uint32))
                     else :
                         vti.append(np.array([1, 1, 1], np.uint32))
-                    if len(f3) > 2 :   
+                    if len(f3) > 2 :
                         vni.append(np.array([f1[2], f2[2], f3[2]], np.uint32))
                     else :
                         vni.append(np.array([1, 1, 1], np.uint32))
@@ -116,7 +120,7 @@ class Mesh():
         for v, vn, vt in zip(vi, vni, vti):
             idx = []
             for i in [0, 1, 2]:
-                if (v[i], vn[i], vt[i]) in dic : 
+                if (v[i], vn[i], vt[i]) in dic :
                     idx.append(dic[(v[i], vn[i], vt[i])])
                 else :
                     tmp.append(np.concatenate((tmpv[v[i]], tmpvn[vn[i]], np.array(3*[1], np.float32), tmpvt[vt[i]])))
