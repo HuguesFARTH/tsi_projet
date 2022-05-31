@@ -6,55 +6,55 @@ newmtl Body
 	Ni 1.5000
 	d 1.0000
 	Tr 0.0000
-	Tf 1.0000 1.0000 1.0000 
+	Tf 1.0000 1.0000 1.0000
 	illum 2
 	Ka 0.1176 0.1176 0.1176
 	Kd 1.0000 1.0000 1.0000
 	Ks 0.7529 0.7529 0.7529
 	Ke 0.0000 0.0000 0.0000
-	map_Ka F:\Dassault Rafale C\Map\Dassault_Rafale_C_P01.png
-	map_Kd F:\Dassault Rafale C\Map\Dassault_Rafale_C_P01.png
-	map_bump F:\Dassault Rafale C\Map\Dassault_Rafale_C_N.png
-	bump F:\Dassault Rafale C\Map\Dassault_Rafale_C_N.png
+	map_Ka Dassault_Rafale_C_P01.png
+	map_Kd Dassault_Rafale_C_P01.png
+	map_bump Dassault_Rafale_C_N.png
+	bump Dassault_Rafale_C_N.png
 
 newmtl Seat
 	Ns 8.0000
 	Ni 1.5000
 	d 1.0000
 	Tr 0.0000
-	Tf 1.0000 1.0000 1.0000 
+	Tf 1.0000 1.0000 1.0000
 	illum 2
 	Ka 0.1176 0.1176 0.1176
 	Kd 1.0000 1.0000 1.0000
 	Ks 0.0000 0.0000 0.0000
 	Ke 0.0000 0.0000 0.0000
-	map_Ka F:\Dassault Rafale C\Map\Eject_Seat.png
-	map_Kd F:\Dassault Rafale C\Map\Eject_Seat.png
+	map_Ka Eject_Seat.png
+	map_Kd Eject_Seat.png
 
 newmtl Pilot
 	Ns 8.0000
 	Ni 1.5000
 	d 1.0000
 	Tr 0.0000
-	Tf 1.0000 1.0000 1.0000 
+	Tf 1.0000 1.0000 1.0000
 	illum 2
 	Ka 0.1176 0.1176 0.1176
 	Kd 1.0000 1.0000 1.0000
 	Ks 0.0000 0.0000 0.0000
 	Ke 0.0000 0.0000 0.0000
-	map_Ka F:\Dassault Rafale C\Map\Pilot_usa.png
-	map_Kd F:\Dassault Rafale C\Map\Pilot_usa.png
+	map_Ka Pilot_usa.png
+	map_Kd Pilot_usa.png
 
 newmtl Glass
 	Ns 8.0000
 	Ni 1.5000
 	d 0.5000
 	Tr 0.5000
-	Tf 0.5000 0.5000 0.5000 
+	Tf 0.5000 0.5000 0.5000
 	illum 2
 	Ka 0.1176 0.1176 0.1176
 	Kd 1.0000 1.0000 1.0000
 	Ks 0.7529 0.7529 0.7529
 	Ke 0.0000 0.0000 0.0000
-	map_Ka F:\Dassault Rafale C\Map\Glass_Cockpit.png
-	map_Kd F:\Dassault Rafale C\Map\Glass_Cockpit.png
+	map_Ka Glass_Cockpit.png
+	map_Kd Glass_Cockpit.png
