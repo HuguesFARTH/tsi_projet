@@ -21,6 +21,7 @@ class Object:
             GL.glUseProgram(self.program)
             GL.glBindVertexArray(self.vao)
             GL.glBindTexture(GL.GL_TEXTURE_2D, self.texture)
+            # GL.glDrawElements(GL.GL_LINE_LOOP, 3*self.nb_triangle, GL.GL_UNSIGNED_INT, None)
             GL.glDrawElements(GL.GL_TRIANGLES, 3*self.nb_triangle, GL.GL_UNSIGNED_INT, None)
 
 class Object3D(Object):
@@ -58,7 +59,7 @@ class Object3D(Object):
         super().draw()
 
 class Camera:
-    def __init__(self, transformation = Transformation3D(translation=pyrr.Vector3([0, 1, 0], dtype='float32')), projection = pyrr.matrix44.create_perspective_projection(60, 1, 0.01, 100)):
+    def __init__(self, transformation = Transformation3D(translation=pyrr.Vector3([0, 1, 0], dtype='float32')), projection = pyrr.matrix44.create_perspective_projection(60, 1, 0.01, 200)):
         self.transformation = transformation
         self.projection = projection
 

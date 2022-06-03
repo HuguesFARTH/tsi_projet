@@ -31,6 +31,7 @@ void main (void)
   vec4 p_model = rotation_model*(vec4(position, 1.0)-rotation_center_model)+rotation_center_model+translation_model;
   //application de la deformation de la vue
   vec4 p_modelview = rotation_view*(p_model-rotation_center_view)+rotation_center_view+translation_view;
+  //vec4 p_modelview = (p_model-rotation_center_view)+rotation_center_view+translation_view;
 
   coordonnee_3d_locale = p_modelview.xyz;
 
