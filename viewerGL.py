@@ -7,8 +7,9 @@ import numpy as np
 from cpe3d import Object3D
 
 class ViewerGL:
-    def __init__(self):
+    def __init__(self,main):
         # initialisation de la librairie GLFW
+        self.main = main
         glfw.init()
         # paramétrage du context OpenGL
         glfw.window_hint(glfw.CONTEXT_VERSION_MAJOR, 3)
@@ -29,7 +30,7 @@ class ViewerGL:
         GL.glClearColor(0.5, 0.6, 0.9, 1.0)
         print(f"OpenGL: {GL.glGetString(GL.GL_VERSION).decode('ascii')}")
 
-        self.objs = []
+        self.entities = []
         self.touch = {}
 
     def run(self):
@@ -37,28 +38,28 @@ class ViewerGL:
         while not glfw.window_should_close(self.window):
             # nettoyage de la fenêtre : fond et profondeur
             GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
-
             self.update_key()
-
-            for obj in self.objs:
-                GL.glUseProgram(obj.program)
-                if isinstance(obj, Object3D):
-                    self.update_camera(obj.program)
-                obj.draw()
-
+            for entity in self.entities:
+                if isinstance(entity, Object3D):
+                        GL.glUseProgram(entity.program)
+                        self.update_camera(entity.program)
+                elif isinstance(entity.object, Object3D):
+                        GL.glUseProgram(entity.main.program3d_id)
+                        self.update_camera(entity.object.program)
+                entity.draw()
             # changement de buffer d'affichage pour éviter un effet de scintillement
             glfw.swap_buffers(self.window)
             # gestion des évènements
             glfw.poll_events()
-        
+
     def key_callback(self, win, key, scancode, action, mods):
         # sortie du programme si appui sur la touche 'échappement'
         if key == glfw.KEY_ESCAPE and action == glfw.PRESS:
             glfw.set_window_should_close(win, glfw.TRUE)
         self.touch[key] = action
-    
+
     def add_object(self, obj):
-        self.objs.append(obj)
+        self.entities.append(obj)
 
     def set_camera(self, cam):
         self.cam = cam
@@ -88,7 +89,7 @@ class ViewerGL:
         if (loc == -1) :
             print("Pas de variable uniforme : rotation_view")
         GL.glUniformMatrix4fv(loc, 1, GL.GL_FALSE, rot)
-    
+
         loc = GL.glGetUniformLocation(prog, "projection")
         if (loc == -1) :
             print("Pas de variable uniforme : projection")
@@ -96,27 +97,42 @@ class ViewerGL:
 
     def update_key(self):
         if glfw.KEY_UP in self.touch and self.touch[glfw.KEY_UP] > 0:
-            self.objs[0].transformation.translation += \
-                pyrr.matrix33.apply_to_vector(pyrr.matrix33.create_from_eulers(self.objs[0].transformation.rotation_euler), pyrr.Vector3([0, 0, 0.02]))
+            self.main.player.object.transformation.translation += \
+                pyrr.matrix33.apply_to_vector(pyrr.matrix33.create_from_eulers(self.main.player.object.transformation.rotation_euler), pyrr.Vector3([0, 0, 0.2]))
         if glfw.KEY_DOWN in self.touch and self.touch[glfw.KEY_DOWN] > 0:
-            self.objs[0].transformation.translation -= \
-                pyrr.matrix33.apply_to_vector(pyrr.matrix33.create_from_eulers(self.objs[0].transformation.rotation_euler), pyrr.Vector3([0, 0, 0.02]))
+            self.main.player.object.transformation.translation -= \
+                pyrr.matrix33.apply_to_vector(pyrr.matrix33.create_from_eulers(self.main.player.object.transformation.rotation_euler), pyrr.Vector3([0, 0, 0.2]))
         if glfw.KEY_LEFT in self.touch and self.touch[glfw.KEY_LEFT] > 0:
-            self.objs[0].transformation.rotation_euler[pyrr.euler.index().yaw] -= 0.1
+            self.main.player.object.transformation.rotation_euler[pyrr.euler.index().yaw] -= 0.1
         if glfw.KEY_RIGHT in self.touch and self.touch[glfw.KEY_RIGHT] > 0:
-            self.objs[0].transformation.rotation_euler[pyrr.euler.index().yaw] += 0.1
+            self.main.player.object.transformation.rotation_euler[pyrr.euler.index().yaw] += 0.1
 
         if glfw.KEY_I in self.touch and self.touch[glfw.KEY_I] > 0:
             self.cam.transformation.rotation_euler[pyrr.euler.index().roll] -= 0.1
+            self.main.player.object.transformation.rotation_euler[pyrr.euler.index().roll] -= 0.1
         if glfw.KEY_K in self.touch and self.touch[glfw.KEY_K] > 0:
             self.cam.transformation.rotation_euler[pyrr.euler.index().roll] += 0.1
+            self.main.player.object.transformation.rotation_euler[pyrr.euler.index().roll] += 0.1
         if glfw.KEY_J in self.touch and self.touch[glfw.KEY_J] > 0:
             self.cam.transformation.rotation_euler[pyrr.euler.index().yaw] -= 0.1
+            self.main.player.object.transformation.rotation_euler[pyrr.euler.index().yaw] -= 0.1
         if glfw.KEY_L in self.touch and self.touch[glfw.KEY_L] > 0:
             self.cam.transformation.rotation_euler[pyrr.euler.index().yaw] += 0.1
+            self.main.player.object.transformation.rotation_euler[pyrr.euler.index().yaw] += 0.1
 
         if glfw.KEY_SPACE in self.touch and self.touch[glfw.KEY_SPACE] > 0:
-            self.cam.transformation.rotation_euler = self.objs[0].transformation.rotation_euler.copy() 
-            self.cam.transformation.rotation_euler[pyrr.euler.index().yaw] += np.pi
-            self.cam.transformation.rotation_center = self.objs[0].transformation.translation + self.objs[0].transformation.rotation_center
-            self.cam.transformation.translation = self.objs[0].transformation.translation + pyrr.Vector3([0, 1, 5])
+            if self.main.player.speed < self.main.player.max_speed:
+                self.main.player.speed += self.main.player.acceleration
+            else:
+                self.main.player.speed = self.main.player.max_speed
+        else:
+            if self.main.player.speed > 0:
+                self.main.player.speed -= self.main.player.de_acceleration
+            else:
+                self.main.player.speed = 0
+        self.main.player.object.transformation.translation += \
+            pyrr.matrix33.apply_to_vector(pyrr.matrix33.create_from_eulers(self.main.player.object.transformation.rotation_euler), pyrr.Vector3([0, 0, self.main.player.speed]))
+        self.cam.transformation.rotation_euler = self.main.player.object.transformation.rotation_euler.copy()
+        self.cam.transformation.rotation_euler[pyrr.euler.index().yaw] += np.pi
+        self.cam.transformation.rotation_center = self.main.player.object.transformation.translation + self.main.player.object.transformation.rotation_center
+        self.cam.transformation.translation = self.main.player.object.transformation.translation + pyrr.Vector3([0, 1, 5])
