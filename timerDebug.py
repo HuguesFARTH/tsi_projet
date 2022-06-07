@@ -56,10 +56,10 @@ class TimerDebug:
         print("-----TimerDebug-----")
         for k,v in self.traite.items():
             print("  -",k,":",v," ms")
-        print("--Nano--")
-        for k,v in self.nano_traite.items():
-            print("  -",k,":",v," ns")
-        print("--Single--")
-        for k,v in self.single_traite.items():
-            print("  -",k,":",v," ms")
+        # print("--Nano--")
+        # for k,v in self.nano_traite.items():
+            # print("  -",k,":",v," ns")
+        # print("--Single--")
+        # for k,v in self.single_traite.items():
+            # print("  -",k,":",v," ms")
         print("--------------------")

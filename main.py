@@ -26,9 +26,21 @@ class Main:
         self.FRAME_CAP = 60.0
         self.TICK_CAP = 60.0
         self.entities = []
+        self.particules = []
+        self.huds = []
+
+
         self.initWindow()
-        self.program3d_id = glutils.create_program_from_file('shader2.vert', 'shader.frag')
+        self.program3d_id = glutils.create_program_from_file('shader.vert', 'shader.frag')
         self.programGUI_id = glutils.create_program_from_file('gui.vert', 'gui.frag')
+
+
+        # HUD instance
+        # Exemple:
+        # vao = Text.initalize_geometry()
+        # texture = glutils.load_texture('fontB.jpg')
+        # text = Text('Bonjour les', np.array([-0.5, 0.5], np.float32), np.array([0.5, 0.6], np.float32), vao, 2, self.programGUI_id, texture)
+        # self.huds.append(text)
 
         # Chargement des models/textures
         self.loadMeshAndTexture()
@@ -36,9 +48,12 @@ class Main:
         self.player = EntityPlayer(self)
         self.player.spawn()
         self.camera = Camera(self, entity=self.player)
-        self.camera = Camera(self, entity=self.player)
         self.camera.transformation.translation.y = 2
 
+
+        rafaleTest = EntityRafale(self)
+        rafaleTest.object.transformation.translation += 5
+        rafaleTest.spawn()
         # centreEnt = EntityCube(self,obj_size = 0.1)
         # centreEnt.object.transformation.translation = pyrr.Vector3([0,0,0])
         # centreEnt.spawn()
@@ -189,6 +204,7 @@ class Main:
                 timer += 1000
                 print(ticks," ticks, ",frames," fps")
                 print("Nbr entitiées: ",len(self.entities))
+                print("Nbr particules: ",len(self.particules))
                 self.ticks_time+= ticks
                 ticks = 0
                 frames = 0
@@ -215,6 +231,14 @@ class Main:
             self.timer_debug.start("entitiesUpdate")
             for ent in self.entities:
                 ent.update()
+            self.timer_debug.end()
+            self.timer_debug.start("particulesUpdate")
+            for particule in self.particules:
+                particule.update()
+            self.timer_debug.end()
+            self.timer_debug.start("hudUpdate")
+            for hud in self.huds:
+                hud.update()
             self.timer_debug.end()
         self.t_mouse_xoffset = 0
         self.t_mouse_yoffset = 0
@@ -245,10 +269,17 @@ class Main:
             block.render()
         self.timer_debug.end()
         self.timer_debug.start("entitiesRender")
-
         GL.glUseProgram(self.program3d_id)
         for ent in self.entities:
             ent.render()
+        self.timer_debug.end()
+        self.timer_debug.start("particuleRender")
+        for particule in self.particules:
+            particule.render()
+        self.timer_debug.end()
+        self.timer_debug.start("hudRender")
+        for hud in self.huds:
+            hud.draw()
         self.timer_debug.end()
         glfw.swap_buffers(self.window)
         # gestion des évènements
