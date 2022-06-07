@@ -120,6 +120,7 @@ class Camera:
         if (loc == -1) :
             print("Pas de variable uniforme : projection")
         GL.glUniformMatrix4fv(loc, 1, GL.GL_FALSE, self.projection)
+
 class Camera1P(Camera):
     def __init__(self, main, entity, transformation = Transformation3D(translation=pyrr.Vector3([0, 1, 0], dtype='float32')), projection = pyrr.matrix44.create_perspective_projection(60, 1, 0.01, 200)):
         Camera.__init__(self,main,entity=entity,transformation=transformation,projection=projection)
