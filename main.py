@@ -10,6 +10,7 @@ import time
 import glfw
 from timerDebug import TimerDebug
 import sys
+import math
 
 class Main:
     def __init__(self):
@@ -29,7 +30,6 @@ class Main:
         self.particules = []
         self.huds = []
 
-
         self.initWindow()
         self.program3d_id = glutils.create_program_from_file('shader.vert', 'shader.frag')
         self.programGUI_id = glutils.create_program_from_file('gui.vert', 'gui.frag')
@@ -46,14 +46,19 @@ class Main:
         self.loadMeshAndTexture()
 
         self.player = EntityPlayer(self)
+        # self.player.object.transformation.translation += pyrr.Vector3([0,2,0])
+        self.player.object.transformation.translation += pyrr.Vector3([0,2,0])
+        # self.player.object.transformation.rotation_euler[pyrr.euler.index().yaw] = math.pi/2
         self.player.spawn()
-        self.camera = Camera(self, entity=self.player)
+        self.camera = Camera3P(self, entity=self.player)
         self.camera.transformation.translation.y = 2
 
 
         rafaleTest = EntityRafale(self)
-        rafaleTest.object.transformation.translation += 5
+        rafaleTest.object.transformation.translation += pyrr.Vector3([0,5,-10])
+        rafaleTest.object.transformation.rotation_euler[pyrr.euler.index().yaw] = math.pi/2
         rafaleTest.spawn()
+
         # centreEnt = EntityCube(self,obj_size = 0.1)
         # centreEnt.object.transformation.translation = pyrr.Vector3([0,0,0])
         # centreEnt.spawn()
@@ -99,12 +104,23 @@ class Main:
         self.meshs['cube'] = Mesh.load_obj("rafale_texture/cube.obj")
         self.meshs['bullet'] = Mesh.load_obj("rafale_texture/bullet2.obj")
 
+        for el in self.meshs.values():
+            el.normalize()
+
+        self.meshs['bullet'] = self.meshs['bullet'].apply_matrix(pyrr.matrix44.create_from_scale(pyrr.Vector4([1,1,1,1])*0.1))
+
         self.textures = {}
         self.textures['rafale'] = glutils.load_texture("rafale_texture/Dassault_Rafale_C_P01.png")
         self.textures['cube'] = glutils.load_texture("rafale_texture/cube.png")
         self.textures['bullet'] = glutils.load_texture("rafale_texture/cube.png")
-        for el in self.meshs.values():
-            el.normalize()
+        self.vao_default = {}
+        self.vao_triangle_default = {}
+        self.vao_default['rafale'] = self.meshs['rafale'].load_to_gpu()
+        self.vao_triangle_default[self.vao_default['rafale']] = self.meshs['rafale'].get_nb_triangles()
+        self.vao_default['cube'] = self.meshs['cube'].load_to_gpu()
+        self.vao_triangle_default[self.vao_default['cube']] = self.meshs['cube'].get_nb_triangles()
+        self.vao_default['bullet'] = self.meshs['bullet'].load_to_gpu()
+        self.vao_triangle_default[self.vao_default['bullet']] = self.meshs['bullet'].get_nb_triangles()
 
     def initWindow(self):
         glfw.init()
@@ -179,6 +195,7 @@ class Main:
 
         timer = time.time()*1000.0;
         self.mouse_catched = False
+        self.mouseCatching()
         self.timer_debug.start("1sec")
         while self.running:
             if glfw.window_should_close(self.window):
@@ -202,16 +219,14 @@ class Main:
                 pass# time.sleep(0.0001)
             if time.time()*1000.0 - timer > 1000:
                 timer += 1000
-                print(ticks," ticks, ",frames," fps")
-                print("Nbr entitiées: ",len(self.entities))
-                print("Nbr particules: ",len(self.particules))
                 self.ticks_time+= ticks
                 ticks = 0
                 frames = 0
-                self.timer_debug.end()
-                self.timer_debug.print()
-                self.timer_debug.reset()
-                self.timer_debug.start("1sec")
+                if False:
+                    self.timer_debug.end()
+                    self.timer_debug.print(ticks,frames)
+                    self.timer_debug.reset()
+                    self.timer_debug.start("1sec")
 
         self.exit()
 
@@ -231,6 +246,7 @@ class Main:
             self.timer_debug.start("entitiesUpdate")
             for ent in self.entities:
                 ent.update()
+                # ent.collide()
             self.timer_debug.end()
             self.timer_debug.start("particulesUpdate")
             for particule in self.particules:

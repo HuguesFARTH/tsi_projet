@@ -26,6 +26,7 @@ class Mesh():
             v = np.array(p.tolist()+v[3:].tolist(), np.float32)
             vert.append(v)
         self.vertices = np.array(vert, np.float32)
+        return self
 
     def copy(self):
         m = Mesh()

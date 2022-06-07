@@ -14,52 +14,98 @@ class BoundingBox:
         self.main = main
         self.offset = offset
         self.position = offset.copy()
+        self.ent = EntityCube(main,obj_size = size, no_bounding_box = True)
+        self.ent.object.render_mode = 1
 
     def intersect(self,position):
-        return pyrr.vector3.length(self.position-position) < size
+        return pyrr.vector3.length(self.position-position) < self.size
+
+    def intersectB(self,bounding_box):
+        return pyrr.vector3.length(self.position - bounding_box.position) < self.size+ bounding_box.position
+
+    def intersectE(self,entity):
+        if not entity.general_bounding_box == None:
+            if entity.general_bounding_box.intersectB(self):
+                for bounding_box in entity.bounding_boxes:
+                    if not bounding_box == None:
+                        if bounding_box.intersectB(self):
+                            return True
+        return False
 
     def adapt(self,transformation):
-        self.position = transformation.translation + self.offset
+        self.position = transformation.translation + pyrr.matrix33.apply_to_vector(pyrr.matrix33.create_from_eulers(transformation.rotation_euler), self.offset)
+        self.ent.object.transformation.translation = self.position
 
     def draw(self):
         self.ent.render()
 
 class Entity():
-    def __init__(self, main, mesh, texture, obj_size = 1,scaleVector =  [1, 1, 1, 1], bounding_box = None, name = "entity"):
+    def __init__(self, main, texture, mesh = None, obj_size = 1,scaleVector =  [1, 1, 1, 1], bounding_box = None, name = "entity", vao = None, bounding_box_forced = True):
         self.main = main
-        self.mesh = mesh.copy()
         self.name = name
-        self.mesh.apply_matrix(pyrr.matrix44.create_from_scale(pyrr.Vector4(scaleVector)*obj_size))
         # self.mesh = Mesh.load_obj("rafale_texture/cube.obj")
         # self.mesh.normalize()
         # self.mesh.apply_matrix(pyrr.matrix44.create_from_scale(pyrr.Vector4(scaleVector)*obj_size))
         tr = Transformation3D()
         self.texture = texture#glutils.load_texture(texture)
-        self.object = Object3D(self.mesh.load_to_gpu(), self.mesh.get_nb_triangles(), self.main.program3d_id, self.texture, tr)
+
+        if vao == None or not mesh == None:
+            self.mesh = mesh.copy()
+            self.mesh.apply_matrix(pyrr.matrix44.create_from_scale(pyrr.Vector4(scaleVector)*obj_size))
+            vao_load = self.mesh.load_to_gpu()
+            triangles = self.mesh.get_nb_triangles()
+        else:
+            vao_load = vao
+            triangles = self.main.vao_triangle_default[vao_load]
+        self.object = Object3D(vao_load, triangles, self.main.program3d_id, self.texture, tr)
         self.start_tick = self.main.ticks_time
+        if not bounding_box == None:
+            self.general_bounding_box = bounding_box
+        elif bounding_box_forced:
+            self.general_bounding_box = BoundingBox(main, size = 1, offset = pyrr.Vector3([0,0,0]))
+        else:
+            self.general_bounding_box = None
+
         self.bounding_boxes = []
-        self.bounding_boxes.append(bounding_box)
 
     def addBounding_Boxe(self, bounding_box):
-        self.bounding_box.append(bounding_box)
+        self.bounding_boxes.append(bounding_box)
 
     def render(self):
-        self.object.render()
+        if not self.name == "player":
+            self.object.render()
+            if not self.general_bounding_box == None:
+                # self.general_bounding_box.draw()
+                pass
+            for bounding_box in self.bounding_boxes:
+                if not bounding_box == None:
+                    bounding_box.draw()
 
     def intersect(self,position):
-        for bounding_box in self.bounding_boxes:
-            if not bounding_box == None:
-                if bounding_box.intersect(position):
-                    return True
-            else:
-                self.bounding_boxes.remove(bounding_box)
+        if not self.general_bounding_box == None:
+            if self.general_bounding_box.intersect(position):
+                for bounding_box in self.bounding_boxes:
+                    if not bounding_box == None:
+                        if bounding_box.intersect(position):
+                            return True
+        return False
+
+    def intersectE(self,entity):
+        if not self.general_bounding_box == None:
+            if self.general_bounding_box.intersectE(entity):
+                for bounding_box in self.bounding_boxes:
+                    if not bounding_box == None:
+                        if bounding_box.intersectE(entity):
+                            return True
+        return False
 
     def update(self):
+        self.last_trans = self.object.transformation.copy()
+        if not self.general_bounding_box == None:
+            self.general_bounding_box.adapt(self.object.transformation)
         for bounding_box in self.bounding_boxes:
             if not bounding_box == None:
                 bounding_box.adapt(self.object.transformation)
-            else:
-                self.bounding_boxes.remove(bounding_box)
 
     def spawn(self):
         self.main.entities.append(self)
@@ -67,12 +113,27 @@ class Entity():
     def destroy(self):
         self.main.entities.remove(self)
 
-    def collide(self):
+    def hit(self):
         pass
+        print("hit")
+
+    def collide(self):
+        for ent in self.main.entities:
+            if ent == self:
+                continue
+            if self.intersectE(ent):
+                print("ouaiii")
+
 
 class EntityRafale(Entity):
     def __init__(self,main, name = "Rafale"):
-        Entity.__init__(self, main, name = name, mesh = main.meshs["rafale"], texture = main.textures['rafale'],bounding_box = BoundingBox(main,size = 0.15, offset = pyrr.Vector3([0,-0.15,0])))
+        Entity.__init__(self, main, name = name, vao = main.vao_default['rafale'], texture = main.textures['rafale'])
+        # self.addBounding_Boxe(BoundingBox(main,size = 0.15, offset = pyrr.Vector3([0,-0.15,0.6])))
+        self.addBounding_Boxe(BoundingBox(main,size = 0.15, offset = pyrr.Vector3([0,-0.15,0.6])))
+        self.addBounding_Boxe(BoundingBox(main,size = 0.15, offset = pyrr.Vector3([0,-0.15,0.3])))
+        self.addBounding_Boxe(BoundingBox(main,size = 0.15, offset = pyrr.Vector3([0,-0.15,0])))
+        self.addBounding_Boxe(BoundingBox(main,size = 0.15, offset = pyrr.Vector3([0,-0.15,-0.3])))
+        self.addBounding_Boxe(BoundingBox(main,size = 0.15, offset = pyrr.Vector3([0,-0.15,-0.6])))
         self.max_speed = 5
         self.speed = 0.1
         self.acceleration = 0.002
@@ -81,6 +142,7 @@ class EntityRafale(Entity):
         self.object.transformation.rotation_center.y = -2
         self.last_shoot = False
         # self.object.transformation.rotation_euler[pyrr.euler.index().yaw] += np.pi
+
     def render(self):
         Entity.render(self)
 
@@ -99,7 +161,7 @@ class EntityRafale(Entity):
     def shoot(self):
         self.main.timer_debug.start("shoot")
         dir = pyrr.matrix33.apply_to_vector(pyrr.matrix33.create_from_eulers(self.object.transformation.rotation_euler), pyrr.Vector3([0, 0,1]))
-        bullet = EntityBullet(self.main,dir,scaleVector=[0.5,0.5,1,1],obj_size=0.1)
+        bullet = EntityBullet(self.main,self,dir,)
         bullet.object.transformation.translation = self.object.transformation.translation + pyrr.matrix33.apply_to_vector(pyrr.matrix33.create_from_eulers(self.object.transformation.rotation_euler),  pyrr.Vector3([0.28 if self.last_shoot else -0.28 ,-0.18,-0.355]))
         bullet.object.transformation.rotation_euler = self.object.transformation.rotation_euler.copy();
         bullet.spawn()
@@ -161,8 +223,8 @@ class EntityPlayer(EntityRafale):
             # self.object.transformation.rotation_euler[pyrr.euler.index().roll] += self.speed/4
 
         if self.main.keyIsPressed(glfw.KEY_LEFT_SHIFT):
-            # self.object.transformation.translation += pyrr.Vector3([0, -self.speed,0])
-            self.object.transformation.rotation_euler[pyrr.euler.index().roll] -= self.speed/4
+            self.object.transformation.translation += pyrr.Vector3([0, -self.speed,0])
+            # self.object.transformation.rotation_euler[pyrr.euler.index().roll] -= self.speed/4
 
         return
         # TEST bullet move
@@ -193,11 +255,12 @@ class EntityPlayer(EntityRafale):
             self.bullet.object.transformation.translation += pyrr.Vector3([0, -self.bullet.speed,0])
 
 class EntityBullet(Entity):
-    def __init__(self,main,dir,scaleVector=[1,1,1,1],obj_size=0.05):
-        Entity.__init__(self, main, mesh = main.meshs["cube"], texture = main.textures['bullet'], scaleVector=scaleVector,obj_size=obj_size)
-        self.speed = 0.001
+    def __init__(self,main,shooter,dir,scaleVector=[1,1,1,1],obj_size=0.05):
+        Entity.__init__(self, main,vao = main.vao_default["bullet"], texture = main.textures['bullet'], scaleVector=scaleVector,obj_size=obj_size)
+        self.speed = 0.1
         self.direction = dir
         self.tick_life = 1000
+        self.shooter = shooter
         # self.object.transformation.rotation_euler[pyrr.euler.index().yaw] += np.pi
 
     def render(self):
@@ -205,7 +268,15 @@ class EntityBullet(Entity):
         Entity.render(self)
 
     def update(self):
-        self.object.transformation.translation += self.direction*self.speed
+        future = self.object.transformation.translation + self.direction*self.speed
+        for ent in self.main.entities:
+            if ent == self.shooter:
+                continue
+            if ent.intersect(future):
+                ent.hit()
+                self.destroy()
+                return
+        self.object.transformation.translation = future
         if self.main.ticks_time - self.start_tick > self.tick_life < 0:
             self.destroy()
 
@@ -216,5 +287,5 @@ class EntityBullet(Entity):
         self.main.particules.remove(self)
 
 class EntityCube(Entity):
-    def __init__(self,main,scaleVector=[1,1,1,1],obj_size=1):
-        Entity.__init__(self, main, mesh = main.meshs["cube"], texture = main.textures['cube'], scaleVector=scaleVector,obj_size=obj_size)
+    def __init__(self,main,scaleVector=[1,1,1,1],obj_size=1, no_bounding_box=False):
+        Entity.__init__(self, main, mesh = main.meshs["cube"], texture = main.textures['cube'], scaleVector=scaleVector, obj_size=obj_size, bounding_box_forced = not no_bounding_box)

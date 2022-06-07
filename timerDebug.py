@@ -53,6 +53,9 @@ class TimerDebug:
             del self.single[name]
 
     def print(self):
+        print(ticks," ticks, ",frames," fps")
+        print("Nbr entitiées: ",len(self.main.entities))
+        print("Nbr particules: ",len(self.main.particules))
         print("-----TimerDebug-----")
         for k,v in self.traite.items():
             print("  -",k,":",v," ms")
