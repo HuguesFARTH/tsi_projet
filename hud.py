@@ -1,6 +1,6 @@
 import glutils
 from mesh import Mesh
-from cpe3d import Object3D, Camera, Transformation3D, Text, Camera3P,Camera1P
+from cpe3d import Object, Object3D, Camera, Transformation3D, Camera3P,Camera1P
 import numpy as np
 import OpenGL.GL as GL
 import pyrr
@@ -25,8 +25,8 @@ class Hud(Object):
     def updateByBase(self):
         base = abs(self.bottomLeft_base[0] - self.topRight_base[0])
         rationB = len(self.value)/len(self.base_value)
-        self.bottomLeft[0] = self.bottomLeft_base[0] * rationB/2
-        self.topRight[0] = self.topRight_base[0] * rationB/2
+        #self.bottomLeft[0] = self.bottomLeft_base[0] * rationB
+        self.topRight[0] = self.topRight_base[0] * 1/rationB
 
     def draw(self):
         GL.glUseProgram(self.program)
@@ -69,3 +69,28 @@ class Hud(Object):
         GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER,vboi)
         GL.glBufferData(GL.GL_ELEMENT_ARRAY_BUFFER,index,GL.GL_STATIC_DRAW)
         return vao
+
+    def update(self):
+        self.updateByBase()
+
+
+class HudPosition(Hud):
+    def __init__(self, main, value, bottomLeft, topRight, vao, nb_triangle, program, texture):
+        super().__init__(main, value, bottomLeft, topRight, vao, nb_triangle, program, texture)
+
+    def update(self):
+        super().update()
+        coord = []
+        for i in self.main.player.object.transformation.translation:
+            c = round(i,2)
+            coord.append(c)
+        self.value = "position: " + str(coord[1])
+
+class HudSpeed(Hud):
+    def __init__(self, main, value, bottomLeft, topRight, vao, nb_triangle, program, texture):
+        super().__init__(main, value, bottomLeft, topRight, vao, nb_triangle, program, texture)
+
+    def update(self):
+        speed = round(self.main.player.speed,2)
+        self.value = "vitesse " +str(speed)
+        super().update()

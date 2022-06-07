@@ -1,7 +1,7 @@
 from viewerGL import ViewerGL
 import glutils
 from mesh import Mesh
-from cpe3d import Object3D, Camera, Transformation3D, Text
+from cpe3d import Object3D, Camera, Transformation3D
 import numpy as np
 import OpenGL.GL as GL
 import pyrr
