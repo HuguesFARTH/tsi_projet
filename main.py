@@ -27,7 +27,7 @@ class Main:
         self.TICK_CAP = 60.0
         self.entities = []
         self.initWindow()
-        self.program3d_id = glutils.create_program_from_file('shader2.vert', 'shader.frag')
+        self.program3d_id = glutils.create_program_from_file('shader.vert', 'shader.frag')
         self.programGUI_id = glutils.create_program_from_file('gui.vert', 'gui.frag')
 
         # Chargement des models/textures
@@ -35,7 +35,6 @@ class Main:
 
         self.player = EntityPlayer(self)
         self.player.spawn()
-        self.camera = Camera(self, entity=self.player)
         self.camera = Camera(self, entity=self.player)
         self.camera.transformation.translation.y = 2
 
