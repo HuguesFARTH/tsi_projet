@@ -27,6 +27,12 @@ class Mesh():
             vert.append(v)
         self.vertices = np.array(vert, np.float32)
 
+    def copy(self):
+        m = Mesh()
+        m.vertices = self.vertices.copy()
+        m.faces = self.faces.copy()
+        return m
+
     def load_to_gpu(self):
         # attribution d'une liste d'état (1 indique la création d'une seule liste)
         vao = GL.glGenVertexArrays(1)
@@ -67,7 +73,7 @@ class Mesh():
 
     """only process one object containing triangular faces"""
     @staticmethod
-    def load_obj(filename):
+    def load_obj(filename,):
         if not os.path.exists(filename):
             print(f'{25*"-"}\nError reading file:\n{filename}\n{25*"-"}')
         m = Mesh()
