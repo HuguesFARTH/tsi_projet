@@ -1,10 +1,11 @@
 from viewerGL import ViewerGL
 import glutils
 from mesh import Mesh
-from cpe3d import Object3D, Camera, Transformation3D, Text, Camera3P,Camera1P
+from cpe3d import Object3D, Camera, Transformation3D, Camera3P,Camera1P
 import numpy as np
 import OpenGL.GL as GL
 import pyrr
+from hud import HudSpeed, HudPosition, Hud
 from rafale import Entity,EntityRafale, EntityPlayer, EntityBullet, EntityCube
 import time
 import glfw
@@ -36,14 +37,6 @@ class Main:
         self.program3d_id = glutils.create_program_from_file('shader.vert', 'shader.frag')
         # self.program_terrain_id = glutils.create_program_from_file('shader_terrain.vert', 'shader.frag')
         self.programGUI_id = glutils.create_program_from_file('gui.vert', 'gui.frag')
-
-
-        # HUD instance
-        # Exemple:
-        # vao = Text.initalize_geometry()
-        # texture = glutils.load_texture('fontB.jpg')
-        # text = Text('Bonjour les', np.array([-0.5, 0.5], np.float32), np.array([0.5, 0.6], np.float32), vao, 2, self.programGUI_id, texture)
-        # self.huds.append(text)
 
         # Chargement des models/textures
         self.loadMeshAndTexture()
@@ -109,6 +102,18 @@ class Main:
         self.touch = {}
         self.button_touch = {}
         self.button_touch_lock = []
+
+        # HUD instance
+        # Exemple:
+        vao = Hud.initalize_geometry()
+        texture = glutils.load_texture('fontB2.png')
+        position = HudPosition(self, "Altitude:", np.array([-0.95, -0.95], np.float32), np.array([-0.25, -0.85], np.float32), vao,
+                   2, self.programGUI_id, texture)
+        self.huds.append(position)
+        speed = HudSpeed(self, "Vitesse:", np.array([-0.95, -0.80], np.float32), np.array([-0.4, -0.70], np.float32),
+                       vao,
+                       2, self.programGUI_id, texture)
+        self.huds.append(speed)
 
     def loadMeshAndTexture(self):
         self.meshs = {}
