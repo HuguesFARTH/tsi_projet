@@ -52,10 +52,13 @@ class TimerDebug:
             self.single_traite[name] = self.main.msTime()-last
             del self.single[name]
 
-    def print(self):
+    def print(self, ticks, frames):
         print(ticks," ticks, ",frames," fps")
         print("Nbr entitiées: ",len(self.main.entities))
-        print("Nbr particules: ",len(self.main.particules))
+        c  = 0
+        for k,v in self.main.particules.items():
+            c += len(v)
+        print("Nbr particules: ",c)
         print("-----TimerDebug-----")
         for k,v in self.traite.items():
             print("  -",k,":",v," ms")

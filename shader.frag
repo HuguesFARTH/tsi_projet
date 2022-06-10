@@ -1,5 +1,9 @@
 #version 330 core
 
+//Fog
+in float visibility;
+uniform vec3 skyColor;
+
 // Variable de sortie (sera utilisé comme couleur)
 out vec4 color;
 
@@ -34,5 +38,8 @@ void main (void)
 
   //couleur finale
   color = (ambiant+diffuse)*color_final+specular*white;
+
+  // Fog
+  color = mix(vec4(skyColor,1.0),color,visibility);
 
 }

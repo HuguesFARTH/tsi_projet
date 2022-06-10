@@ -11,6 +11,7 @@ import glfw
 from timerDebug import TimerDebug
 import sys
 import math
+from terrain import Terrain
 
 class Main:
     def __init__(self):
@@ -27,11 +28,13 @@ class Main:
         self.FRAME_CAP = 60.0
         self.TICK_CAP = 60.0
         self.entities = []
-        self.particules = []
+        self.particules = {}
+        self.particules['bullet'] = []
         self.huds = []
 
         self.initWindow()
         self.program3d_id = glutils.create_program_from_file('shader.vert', 'shader.frag')
+        # self.program_terrain_id = glutils.create_program_from_file('shader_terrain.vert', 'shader.frag')
         self.programGUI_id = glutils.create_program_from_file('gui.vert', 'gui.frag')
 
 
@@ -45,9 +48,13 @@ class Main:
         # Chargement des models/textures
         self.loadMeshAndTexture()
 
+        self.terrain = Terrain(self,tile_size = 256,vertex_count = 128)
+
         self.player = EntityPlayer(self)
+
         # self.player.object.transformation.translation += pyrr.Vector3([0,2,0])
         self.player.object.transformation.translation += pyrr.Vector3([0,2,0])
+        # self.player.center()
         # self.player.object.transformation.rotation_euler[pyrr.euler.index().yaw] = math.pi/2
         self.player.spawn()
         self.camera = Camera3P(self, entity=self.player)
@@ -68,16 +75,21 @@ class Main:
         self.mouseY_middle = int(self.mouseY_middle/2)
 
         self.blocks = []
-        m = Mesh()
-        size = 100
-        p0, p1, p2, p3 = [-size, 0, -size], [size, 0, -size], [size, 0, size], [-size, 0, size]
-        n, c = [0, 1, 0], [1, 1, 1]
-        t0, t1, t2, t3 = [0, 0], [1, 0], [1, 1], [0, 1]
-        m.vertices = np.array([[p0 + n + c + t0], [p1 + n + c + t1], [p2 + n + c + t2], [p3 + n + c + t3]], np.float32)
-        m.faces = np.array([[0, 1, 2], [0, 2, 3]], np.uint32)
-        texture = glutils.load_texture('grass.jpg')
-        o = Object3D(m.load_to_gpu(), m.get_nb_triangles(), self.program3d_id, texture, Transformation3D())
-        self.blocks.append(o)
+
+        # m = Mesh()
+        # size = 100
+        # p0, p1, p2, p3 = [-size, 0, -size], [size, 0, -size], [size, 0, size], [-size, 0, size]
+        # n, c = [0, 1, 0], [1, 1, 1]
+        # t0, t1, t2, t3 = [0, 0], [1, 0], [1, 1], [0, 1]
+        # m.vertices = np.array([[p0 + n + c + t0], [p1 + n + c + t1], [p2 + n + c + t2], [p3 + n + c + t3]], np.float32)
+        # m.faces = np.array([[0, 1, 2], [0, 2, 3]], np.uint32)
+        # texture = glutils.load_texture('grass.jpg')
+        # o = Object3D(m.load_to_gpu(), m.get_nb_triangles(), self.program3d_id, texture, Transformation3D())
+
+        # o = self.terrain.generateTerrain()
+        # o.render_mode = 0
+        # self.blocks.append(o)
+
         # paramétrage de la fonction de gestion des évènements
         glfw.set_key_callback(self.window, self.keyCallback)
         glfw.set_mouse_button_callback(self.window, self.mouseCallback)
@@ -113,6 +125,8 @@ class Main:
         self.textures['rafale'] = glutils.load_texture("rafale_texture/Dassault_Rafale_C_P01.png")
         self.textures['cube'] = glutils.load_texture("rafale_texture/cube.png")
         self.textures['bullet'] = glutils.load_texture("rafale_texture/cube.png")
+        self.textures['grass'] = glutils.load_texture("grass.jpg")
+
         self.vao_default = {}
         self.vao_triangle_default = {}
         self.vao_default['rafale'] = self.meshs['rafale'].load_to_gpu()
@@ -220,13 +234,14 @@ class Main:
             if time.time()*1000.0 - timer > 1000:
                 timer += 1000
                 self.ticks_time+= ticks
-                ticks = 0
-                frames = 0
-                if False:
+                if True:
                     self.timer_debug.end()
                     self.timer_debug.print(ticks,frames)
                     self.timer_debug.reset()
                     self.timer_debug.start("1sec")
+                ticks = 0
+                frames = 0
+
 
         self.exit()
 
@@ -236,7 +251,9 @@ class Main:
         self.mouse_dX = self.t_mouse_dX
         self.mouse_dY = self.t_mouse_dY
         if self.mouse_catched:
-
+            self.timer_debug.start("terrainUpdate")
+            self.terrain.render()
+            self.timer_debug.end()
             self.timer_debug.start("input")
             self.input()
             self.timer_debug.end()
@@ -246,11 +263,13 @@ class Main:
             self.timer_debug.start("entitiesUpdate")
             for ent in self.entities:
                 ent.update()
-                # ent.collide()
+                ent.collide()
             self.timer_debug.end()
             self.timer_debug.start("particulesUpdate")
-            for particule in self.particules:
-                particule.update()
+            for k,v in self.particules.items():
+                if len(v) > 0:
+                    for particule in v:
+                        particule.update()
             self.timer_debug.end()
             self.timer_debug.start("hudUpdate")
             for hud in self.huds:
@@ -271,12 +290,11 @@ class Main:
         # self.game.update();
 
     def render(self):
-		# if (Display.wasResized()) {
-		# 	glViewport(0, 0, Display.getWidth(), Display.getHeight());
-		# }
         # nettoyage de la fenêtre : fond et profondeur
         GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
-
+        self.timer_debug.start("terrainRender")
+        self.terrain.render()
+        self.timer_debug.end()
         self.timer_debug.start("cameraRender")
         self.camera.render()
         self.timer_debug.end()
@@ -285,13 +303,17 @@ class Main:
             block.render()
         self.timer_debug.end()
         self.timer_debug.start("entitiesRender")
-        GL.glUseProgram(self.program3d_id)
         for ent in self.entities:
             ent.render()
         self.timer_debug.end()
         self.timer_debug.start("particuleRender")
-        for particule in self.particules:
-            particule.render()
+        for k,v in self.particules.items():
+            if len(v) > 0:
+                GL.glUseProgram(v[0].object.program)
+                GL.glBindVertexArray(v[0].object.vao)
+                GL.glBindTexture(GL.GL_TEXTURE_2D, v[0].object.texture)
+            for particule in v:
+                particule.render()
         self.timer_debug.end()
         self.timer_debug.start("hudRender")
         for hud in self.huds:
