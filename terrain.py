@@ -5,9 +5,11 @@ import numpy as np
 from PIL import Image
 import os
 import pyrr
+import OpenGL.GL as GL
+import c_math
 
 class Terrain:
-    def __init__(self, main, tile_size = 800, vertex_count=128, max_height = 40):
+    def __init__(self, main, tile_size = 800, vertex_count=128, max_height = 150):
         self.main = main
         self.tile_size = tile_size
         self.vertex_count = vertex_count
@@ -15,18 +17,38 @@ class Terrain:
         self.max_p_color = 256 * 256 * 256
         self.loadHeightMap()
         self.t = self.generateTerrain()
+        self.t.transformation.rotation_center = -pyrr.Vector3([self.tile_size/2,0,self.tile_size/2])
         # self.t.render_mode = 1
 
 
     def loadHeightMap(self):
-        filename = "heightmap2.png"
+        filename = "heightmap1.png"
         if not os.path.exists(filename):
             print(f'{25*"-"}\nError reading file:\n{filename}\n{25*"-"}')
         self.heightmap_image = Image.open(filename)
 
 
     def render(self):
+        # self.t.render()
+        # return
+        firstT = self.t.transformation.copy()
         self.t.render()
+        self.t.transformation = firstT
+        return
+        for x in range(-1,2):
+            for z in range(-1,2):
+                if not abs(x*z) == 1:
+                    self.t.transformation.rotation_euler[pyrr.euler.index().yaw] = math.pi
+                self.t.transformation.translation.x = x*self.tile_size
+                self.t.transformation.translation.z = z*self.tile_size
+                self.t.render()
+        # self.t.transformation.translation.x += self.tile_size
+        # self.t.transformation.rotation_euler[pyrr.euler.index().yaw]+=math.pi/300
+
+
+
+    def renderPos(self,x,z):
+        pass
 
     def update(self):
         pass
@@ -57,7 +79,6 @@ class Terrain:
                 indices.append([topLeft,bottomLeft,topRight])
                 indices.append([topRight, bottomLeft, bottomRight])
         m.faces = np.array(indices, np.uint32)
-        # print(self.heights)
         self.m = m
         return Object3D(m.load_to_gpu(), m.get_nb_triangles(), self.main.program3d_id, self.main.textures['grass'], Transformation3D())
 
@@ -71,52 +92,98 @@ class Terrain:
         return vec
 
     def getHeightPixel(self, x, z):
+        # return 0
         if x >= self.heightmap_image.width or z >= self.heightmap_image.height or x < 0 or z < 0:
             return 0
         else:
             h = self.heightmap_image.getpixel((x,z))
             if not isinstance(h,int):
                 h = h[0]*h[1]*h[2]
-            # h += self.max_p_color/2
-            h /= self.max_p_color/2
-            h *= self.max_height
+                h /= self.max_p_color
+                h *= self.max_height
+            else:
+                print("erreur dans la heighmap")
+                exit()
             return h
 
-    def getHeight(self, x, y, z):
+    def setRed(self,x,y,z):
         terrain_x = self.t.transformation.translation.x - x
         terrain_z = self.t.transformation.translation.z - z
         grid_square_size = self.tile_size / (len(self.heights) - 1)
         gridX = int((terrain_x/grid_square_size))
         gridZ = int((terrain_z/grid_square_size))
-        # print("gridX: ",gridX,"gridZ: ",gridZ)
         if gridX + 1 >= len(self.heights) or gridZ + 1 >= len(self.heights) or gridZ- 1 < 0 or gridX - 1 < 0:
             return 0
         x_coord = (terrain_x % grid_square_size)/self.tile_size
         z_coord = (terrain_z % grid_square_size)/self.tile_size
+
+        # vec = pyrr.Vector3([int(x),self.heights[gridX][gridZ],int(z)])
+        GL.glUseProgram(self.t.program)
+        loc = GL.glGetUniformLocation(self.t.program, "posToSetRed")
+        if not (loc == -1) :
+            GL.glUniform3f(loc, int(x), self.heights[gridX][gridZ], int(z))
+
+    # Version par intersection plan/droit (0,1,0)
+    def getHeightV2(self, x, y, z):
+        self.main.timer_debug.start("after")
+        terrain_x = self.t.transformation.translation.x - x
+        terrain_z = self.t.transformation.translation.z - z
+        grid_square_size = self.tile_size / (len(self.heights))
+        gridX = int((terrain_x-0.5)/grid_square_size)
+        gridZ = int((terrain_z-0.5)/grid_square_size)
+        gridX2 = int((terrain_x)/grid_square_size)
+        gridZ2 = int((terrain_z)/grid_square_size)
+        x_coord = (terrain_x - (gridX2*grid_square_size)-0.5)%1
+        z_coord = (terrain_z - (gridZ2*grid_square_size)-0.5)%1
+        self.main.timer_debug.end()
         if x_coord <= (1-z_coord):
-            height = self.barryCentre(pyrr.Vector3([0,self.heights[gridX][gridZ],0]), pyrr.Vector3([0,self.heights[gridX][gridZ+1],1]),pyrr.Vector3([1,self.heights[gridX+1][gridZ],0]), x_coord, y, z_coord)
+            height = c_math.intersecTriangle(pyrr.Vector3([0,self.heights[gridX][gridZ],0]), pyrr.Vector3([0,self.heights[gridX][gridZ+1],1]),pyrr.Vector3([1,self.heights[gridX+1][gridZ],0]), pyrr.Vector3([x_coord, 0,z_coord]))
         else:
-            height = self.barryCentre(pyrr.Vector3([0,self.heights[gridX][gridZ+1],1]), pyrr.Vector3([1,self.heights[gridX+1][gridZ+1],1]), pyrr.Vector3([1,self.heights[gridX+1][gridZ],0]), x_coord, y,z_coord)
-            # height /= (x_coord+z_coord)
+            height = c_math.intersecTriangle(pyrr.Vector3([1,self.heights[gridX+1][gridZ+1],1]), pyrr.Vector3([1,self.heights[gridX+1][gridZ],0]), pyrr.Vector3([0,self.heights[gridX][gridZ+1],1]), pyrr.Vector3([x_coord, 0,z_coord]))
         return height
 
-    def barryCentre(self,v1,v2,v3,posX,y,posZ):
+    def getHeight(self, x, y, z, fake = False):
+        self.main.timer_debug.start("before")
+        terrain_x = self.t.transformation.translation.x - x
+        terrain_z = self.t.transformation.translation.z - z
+        grid_square_size = self.tile_size / (len(self.heights))
+        gridX = int((terrain_x-0.5)/grid_square_size)
+        gridZ = int((terrain_z-0.5)/grid_square_size)
+        gridX2 = int((terrain_x)/grid_square_size)
+        gridZ2 = int((terrain_z)/grid_square_size)
+        x_coord = (terrain_x - (gridX2*grid_square_size)-0.5)%1
+        z_coord = (terrain_z - (gridZ2*grid_square_size)-0.5)%1
+        self.main.timer_debug.end()
+        if x_coord <= (1-z_coord):
+            height = self.cheackBarryCentre(pyrr.Vector3([0,self.heights[gridX][gridZ],0]), pyrr.Vector3([0,self.heights[gridX][gridZ+1],1]),pyrr.Vector3([1,self.heights[gridX+1][gridZ],0]), x_coord, y, z_coord, fake)
+        else:
+            height = self.cheackBarryCentre(pyrr.Vector3([0,self.heights[gridX][gridZ+1],1]), pyrr.Vector3([1,self.heights[gridX+1][gridZ+1],1]), pyrr.Vector3([1,self.heights[gridX+1][gridZ],0]), x_coord, y,z_coord, fake)
+        return height
+
+    def cheackBarryCentre(self,v1,v2,v3,posX,y,posZ, fake = False):
         max = v1.y
         min = v1.y
-        if v2.y > max:
-            max = v2.y
-        elif v2.y < min:
-            min = v2.y
-        if v3.y > max:
-            max = v3.y
-        elif v3.y < min:
-            min = v3.y
-        if max > y > min and (max - min) > 10:
-            print("max:",max,"min",min)
-            return y
+        if fake:
+            if v2.y > max:
+                max = v2.y
+            elif v2.y < min:
+                min = v2.y
+            if v3.y > max:
+                max = v3.y
+            elif v3.y < min:
+                min = v3.y
+            if y > max + 1:
+                return max
+            elif max > y > min and (max - min) > 10:
+                return y
+            else:
+                return self.barryCentre(v1, v2, v3, posX, posZ)
         else:
-            det = (v2.z-v3.z)*(v1.x-v3.x) + (v3.x-v2.x)*(v1.z-v3.z)
-            l1 = ((v2.z - v3.z) * (posX - v3.x) + (v3.x - v2.x) * (posZ - v3.z))/det
-            l2 = ((v3.z - v1.z) * (posX - v3.x) + (v1.x - v3.x) * (posZ - v3.z))/det
-            l3 = 1 - l1 - l2
-            return l1 * v1.y + l2*v2.y + l3*v3.y
+            return self.barryCentre(v1, v2, v3, posX, posZ)
+
+    def barryCentre(self,v1,v2,v3,posX,posZ):
+        det = (v2.z-v3.z)*(v1.x-v3.x) + (v3.x-v2.x)*(v1.z-v3.z)
+        l1 = ((v2.z - v3.z) * (posX - v3.x) + (v3.x - v2.x) * (posZ - v3.z))/det
+        l2 = ((v3.z - v1.z) * (posX - v3.x) + (v1.x - v3.x) * (posZ - v3.z))/det
+        l3 = 1 - l1 - l2
+        return l1 * v1.y + l2*v2.y + l3*v3.y

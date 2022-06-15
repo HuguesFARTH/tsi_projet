@@ -20,14 +20,16 @@ class Hud(Object):
         self.topRight = topRight
         self.bottomLeft_base = bottomLeft.copy()
         self.topRight_base = topRight.copy()
+        self.size = 0.5
+
         super().__init__(vao, nb_triangle, program, texture)
 
     def updateByBase(self):
         base = abs(self.bottomLeft_base[0] - self.topRight_base[0])
         rationB = len(self.value)/len(self.base_value)
         #self.bottomLeft[0] = self.bottomLeft_base[0] * rationB
-        self.topRight[0] = self.topRight_base[0] * 1/rationB
-
+        self.topRight[0] = self.topRight_base[0]/(rationB*self.size)
+        # self.bottomLeft /= self.size
     def draw(self):
         GL.glUseProgram(self.program)
         GL.glDisable(GL.GL_DEPTH_TEST)
@@ -84,7 +86,7 @@ class HudPosition(Hud):
         for i in self.main.player.object.transformation.translation:
             c = round(i,2)
             coord.append(c)
-        self.value = "position: " + str(coord[1])
+        self.value = "position: z" + str(coord[0])+" y:"+ str(coord[1])+" z:"+ str(coord[2])
 
 class HudSpeed(Hud):
     def __init__(self, main, value, bottomLeft, topRight, vao, nb_triangle, program, texture):
@@ -93,4 +95,22 @@ class HudSpeed(Hud):
     def update(self):
         speed = round(self.main.player.speed,2)
         self.value = "vitesse " +str(speed)
+        super().update()
+
+class HudRegulePitch(Hud):
+    def __init__(self, main, value, bottomLeft, topRight, vao, nb_triangle, program, texture):
+        super().__init__(main, value, bottomLeft, topRight, vao, nb_triangle, program, texture)
+
+    def update(self):
+        self.value = "pitchLock: "+str(self.main.player.regulePitchVar)
+        super().update()
+
+class HudFPS(Hud):
+    def __init__(self, main, value, bottomLeft, topRight, vao, nb_triangle, program, texture):
+        super().__init__(main, value, bottomLeft, topRight, vao, nb_triangle, program, texture)
+
+    def update(self):
+        frames = round(self.main.last_frames,2)
+        ticks = round(self.main.last_ticks,2)
+        self.value = "Fps: " +str(frames) + ", Ticks: " + str(ticks)
         super().update()

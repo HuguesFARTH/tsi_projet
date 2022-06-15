@@ -15,7 +15,7 @@ in vec2 vtex;
 
 uniform sampler2D t;
 
-vec3 light=vec3(0.5,0.5,5.0);
+vec3 light=vec3(0.5,0.5,100.0);
 
 void main (void)
 {
@@ -40,6 +40,6 @@ void main (void)
   color = (ambiant+diffuse)*color_final+specular*white;
 
   // Fog
-  color = mix(vec4(skyColor,1.0),color,visibility);
+  //color = mix(vec4(skyColor,1.0),color,visibility);
 
 }
