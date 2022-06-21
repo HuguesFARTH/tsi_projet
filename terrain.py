@@ -155,7 +155,6 @@ class Terrain:
 
     # Version par intersection plan/droit (0,1,0)
     def getHeightV2(self, x, y, z):
-        self.main.timer_debug.start("after")
         terrain_x = self.t.transformation.translation.x - x
         terrain_z = self.t.transformation.translation.z - z
         grid_square_size = self.tile_size / (len(self.heights))
@@ -164,11 +163,9 @@ class Terrain:
         gridX2 = int((terrain_x)/grid_square_size)
         gridZ2 = int((terrain_z)/grid_square_size)
         if gridX + 1 >= len(self.heights) or gridZ + 1 >= len(self.heights) or gridZ- 1 < 0 or gridX - 1 < 0:
-            self.main.timer_debug.end()
             return 0
         x_coord = (terrain_x - (gridX2*grid_square_size)-0.5)%1
         z_coord = (terrain_z - (gridZ2*grid_square_size)-0.5)%1
-        self.main.timer_debug.end()
         if x_coord <= (1-z_coord):
             height = c_math.intersecTriangle(pyrr.Vector3([0,self.heights[gridX][gridZ],0]), pyrr.Vector3([0,self.heights[gridX][gridZ+1],1]),pyrr.Vector3([1,self.heights[gridX+1][gridZ],0]), pyrr.Vector3([x_coord, 0,z_coord]))
         else:
@@ -176,7 +173,6 @@ class Terrain:
         return height
 
     def getHeight(self, x, y, z, fake = False):
-        self.main.timer_debug.start("before")
         terrain_x = self.t.transformation.translation.x - x
         terrain_z = self.t.transformation.translation.z - z
         grid_square_size = self.tile_size / (len(self.heights))
@@ -188,7 +184,6 @@ class Terrain:
             return 0
         x_coord = (terrain_x - (gridX2*grid_square_size)-0.5)%1
         z_coord = (terrain_z - (gridZ2*grid_square_size)-0.5)%1
-        self.main.timer_debug.end()
         if x_coord <= (1-z_coord):
             height = self.cheackBarryCentre(pyrr.Vector3([0,self.heights[gridX][gridZ],0]), pyrr.Vector3([0,self.heights[gridX][gridZ+1],1]),pyrr.Vector3([1,self.heights[gridX+1][gridZ],0]), x_coord, y, z_coord, fake)
         else:
