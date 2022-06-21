@@ -144,6 +144,7 @@ class Main:
             return ("Distance fantome: " + str(round(pyrr.vector3.length(self.main.player.object.transformation.translation-self.main.rafale.object.transformation.translation),2)))
         distance_ghost = hud.HudPlayerFonction(self, "Distance fantome: 0", distanceGhost, np.array([-0.95, -0.45], np.float32), vao, 2, self.programGUI_id, texture)
         self.huds.append(distance_ghost)
+
     def spawnGhost(self):
         self.rafale = EntityRafale(self)
         self.rafale.center()
@@ -314,7 +315,7 @@ class Main:
                 self.ticks_time+= ticks
                 if True:
                     self.timer_debug.end()
-                    # self.timer_debug.print(ticks,frames)
+                    self.timer_debug.print(ticks,frames)
                     self.timer_debug.reset()
                     self.timer_debug.start("1sec")
                 self.last_ticks = ticks
