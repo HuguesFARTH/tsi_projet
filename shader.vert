@@ -2,7 +2,7 @@
 
 
 //Fog
-const float density = 0.006;
+const float density = 0.003;
 const float gradient = 1.5;
 out float visibility;
 

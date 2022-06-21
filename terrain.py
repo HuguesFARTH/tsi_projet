@@ -31,6 +31,7 @@ class Terrain:
     def render(self):
         # self.t.render()
         # return
+        # return
         firstT = self.t.transformation.copy()
         self.t.render()
         self.t.transformation = firstT
@@ -45,7 +46,19 @@ class Terrain:
         # self.t.transformation.translation.x += self.tile_size
         # self.t.transformation.rotation_euler[pyrr.euler.index().yaw]+=math.pi/300
 
+    def getRawHeight(self,x_pos, z_pos, size):
+        map = []
+        s = len(range(x_pos-size, x_pos+size))
+        for x in range(2*size):
+            map.append([0]*(size*2))
+            if x_pos+x-size >= len(self.heights) or x_pos+x-size < 0:
+                continue
+            for z in range(2*size):
+                if z_pos+z-size >= len(self.heights[x_pos+x-size]) or z_pos+z-size < 0:
+                    continue
+                map[x][z] = self.heights[x_pos+x-size][z_pos+z-size]
 
+        return map
 
     def renderPos(self,x,z):
         pass
@@ -123,6 +136,30 @@ class Terrain:
         if not (loc == -1) :
             GL.glUniform3f(loc, int(x), self.heights[gridX][gridZ], int(z))
 
+    # Version par intersection plan/droit (dir)
+    def getDistanceBeforeCollide(self, pos, dir, max = 70):
+        grid_square_size = self.tile_size / (len(self.heights))
+        for i in range(0,max):
+            p = pos*dir*(i)
+            terrain_d = self.t.transformation.translation - p
+            gridX = int((terrain_d.x-0.5)/grid_square_size)
+            gridZ = int((terrain_d.z-0.5)/grid_square_size)
+            gridX2 = int((terrain_d.x)/grid_square_size)
+            gridZ2 = int((terrain_d.z)/grid_square_size)
+            if gridX + 1 >= len(self.heights) or gridZ + 1 >= len(self.heights) or gridZ- 1 < 0 or gridX - 1 < 0:
+                # print("pass")
+                continue
+            print("next")
+            x_coord = (terrain_d.x - (gridX2*grid_square_size)-0.5)%1
+            z_coord = (terrain_d.z - (gridZ2*grid_square_size)-0.5)%1
+            if x_coord <= (1-z_coord):
+                height = c_math.intersecTriangle(pyrr.Vector3([0,self.heights[gridX][gridZ],0]), pyrr.Vector3([0,self.heights[gridX][gridZ+1],1]),pyrr.Vector3([1,self.heights[gridX+1][gridZ],0]), pyrr.Vector3([x_coord, 0,z_coord]))
+            else:
+                height = c_math.intersecTriangle(pyrr.Vector3([1,self.heights[gridX+1][gridZ+1],1]), pyrr.Vector3([1,self.heights[gridX+1][gridZ],0]), pyrr.Vector3([0,self.heights[gridX][gridZ+1],1]), pyrr.Vector3([x_coord, 0,z_coord]))
+            if height >= p.y:
+                return (i)
+        return 200
+
     # Version par intersection plan/droit (0,1,0)
     def getHeightV2(self, x, y, z):
         self.main.timer_debug.start("after")
@@ -133,6 +170,8 @@ class Terrain:
         gridZ = int((terrain_z-0.5)/grid_square_size)
         gridX2 = int((terrain_x)/grid_square_size)
         gridZ2 = int((terrain_z)/grid_square_size)
+        if gridX + 1 >= len(self.heights) or gridZ + 1 >= len(self.heights) or gridZ- 1 < 0 or gridX - 1 < 0:
+            return 0
         x_coord = (terrain_x - (gridX2*grid_square_size)-0.5)%1
         z_coord = (terrain_z - (gridZ2*grid_square_size)-0.5)%1
         self.main.timer_debug.end()
@@ -151,6 +190,8 @@ class Terrain:
         gridZ = int((terrain_z-0.5)/grid_square_size)
         gridX2 = int((terrain_x)/grid_square_size)
         gridZ2 = int((terrain_z)/grid_square_size)
+        if gridX + 1 >= len(self.heights) or gridZ + 1 >= len(self.heights) or gridZ- 1 < 0 or gridX - 1 < 0:
+            return 0
         x_coord = (terrain_x - (gridX2*grid_square_size)-0.5)%1
         z_coord = (terrain_z - (gridZ2*grid_square_size)-0.5)%1
         self.main.timer_debug.end()

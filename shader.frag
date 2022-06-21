@@ -40,6 +40,6 @@ void main (void)
   color = (ambiant+diffuse)*color_final+specular*white;
 
   // Fog
-  //color = mix(vec4(skyColor,1.0),color,visibility);
+  color = mix(vec4(skyColor,1.0),color,visibility);
 
 }

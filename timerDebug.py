@@ -20,6 +20,7 @@ class TimerDebug:
         self.nano_traite.clear()
 
     def start(self,name):
+        # print(str(" | " * len(self.dics)), "+", name)
         if not name in self.dics:
             self.dics[name] = self.main.msTime()
 
@@ -31,6 +32,7 @@ class TimerDebug:
         else:
             self.traite[last[0]] = self.main.msTime()-last[1]
             self.call[last[0]] = 1
+        # print(str(" | " * (len(self.dics)-1)), "-", last[0])
         self.dics.pop(last[0])
 
     def startNano(self,name):

@@ -22,8 +22,6 @@ class BoundingBox:
     def intersect(self,position):
         st = "p."+str(position)
         if st in self.save.keys():
-            self.main.timer_debug.start("time save")
-            self.main.timer_debug.end()
             return self.save[st]
         self.save[st] = pyrr.vector3.squared_length(self.position-position) < self.size**2
         return self.save[st]
@@ -56,20 +54,20 @@ class BoundingBox:
                 v = position-self.position+g
                 ll = pyrr.vector3.squared_length(v)
                 if ll < l:
-                    print("ouii")
                     l = pyrr.vector3.squared_length(v)
-                    print('g',g,'pos',self.position)
                     r = g + self.position
         elif delta == 0:
             r = pyrr.Vector3([r*vecteur[0] + p[0],r*vecteur[1] + p[1],r*vecteur[2] + p[2]])
         return r
 
     def intersectHeight(self):
+        if self.position.y < 0:
+            return True
+        if self.position.y > 255 or self.position.z < -self.main.terrain.tile_size or self.position.x < -self.main.terrain.tile_size or self.position.z > 0 or self.position.x > 0:
+            return True
         tp = self.position.copy()
         st = "h."+str([tp.x,tp.y,tp.z])
         if st in self.save.keys():
-            self.main.timer_debug.start("time save")
-            self.main.timer_debug.end()
             return self.save[st]
         tp.y = self.main.terrain.getHeightV2(tp.x,tp.y,tp.z)
         self.save[st] = self.position.y  <= tp.y + self.size
@@ -78,8 +76,6 @@ class BoundingBox:
     def intersectB(self,bounding_box):
         st = "b."+str(bounding_box)
         if st in self.save.keys():
-            self.main.timer_debug.start("time save")
-            self.main.timer_debug.end()
             return self.save[st]
         self.save[st] = (pyrr.vector3.squared_length(self.position - bounding_box.position) <= (self.size + bounding_box.size)**2)
         return self.save[st]
@@ -87,8 +83,6 @@ class BoundingBox:
     def intersectE(self,entity, fast = False):
         st = "e."+str(entity)
         if st in self.save.keys():
-            self.main.timer_debug.start("time save")
-            self.main.timer_debug.end()
             return self.save[st]
         if not entity.general_bounding_box == None:
             if self.intersectB(entity.general_bounding_box):
@@ -99,15 +93,15 @@ class BoundingBox:
                         if bounding_box.intersectB(self):
                             self.save[st] = True
                             return True
+                return True
         self.save[st] = False
         return False
 
     def adapt(self,transformation,euler):
         self.save.clear()
-        self.main.timer_debug.start("adapt")
         self.position = transformation.translation + pyrr.matrix33.apply_to_vector(euler, self.offset)
-        self.main.timer_debug.end()
         self.ent.object.transformation.translation = self.position
+        self.ent.object.transformation.rotation_euler = transformation.rotation_euler
 
     def draw(self):
         self.ent.render()
@@ -140,6 +134,11 @@ class Entity():
         self.life = 100
         self.hide_bounding_box = False
         self.destroy_if_collide = False
+        self.can_be_collide = True
+        self.transparent = False
+        self.tick_alive = 0
+
+
 
     def addBounding_Boxe(self, bounding_box):
         self.bounding_boxes.append(bounding_box)
@@ -200,6 +199,7 @@ class Entity():
         return False
 
     def update(self):
+        self.tick_alive += 1
         euler = pyrr.matrix33.create_from_eulers(self.object.transformation.rotation_euler)
         if not self.general_bounding_box == None:
             self.general_bounding_box.adapt(self.object.transformation,euler)
@@ -208,10 +208,13 @@ class Entity():
                 bounding_box.adapt(self.object.transformation,euler)
 
     def spawn(self):
-        self.main.entities.append(self)
+        if not self in self.main.entities:
+            self.main.entities.append(self)
 
     def destroy(self):
-        self.main.entities.remove(self)
+        if self in self.main.entities:
+            # print("destroy",self)
+            self.main.entities.remove(self)
 
     def hit(self, am = 1):
         self.life -= am
@@ -224,72 +227,102 @@ class Entity():
 
     # Retourne True si collision avec le terrain, l'entité si c'est une entité
     def collide(self):
-        self.main.timer_debug.start("collide h")
         if self.intersectHeight():
             self.object.transformation = self.last_trans
             self.last_trans = self.object.transformation.copy()
             self.collidWall()
-            self.main.timer_debug.end()
             return True
-        self.main.timer_debug.end()
-        self.main.timer_debug.start("collide e")
+
         for ent in self.main.entities:
-            if (not ent.collidable) or ent == self or (hasattr(self,'shooter') and self.shooter == ent):
-                # if self.name == "Player":
-                #     print("not test",ent.name)
+            if (not ent.can_be_collide) or ent == self or (hasattr(self,'shooter') and self.shooter == ent):
                 continue
             elif self.intersectE(ent):
-                self.object.transformation = self.last_trans
-                self.last_trans = self.object.transformation.copy()
-                # print("collide ", ent)
-                self.main.timer_debug.end()
-                if self.destroy_if_collide:
-                    self.destroy()
-                if ent.destroy_if_collide:
-                    ent.destroy()
+                self.collideEntity(ent)
                 return ent
         self.last_trans = self.object.transformation.copy()
-        self.main.timer_debug.end()
         return False
 
+    def collideEntity(self, ent):
+        if self.destroy_if_collide and not ent.transparent and self.isAlive():
+            self.destroy()
+            ent.collideEntity(self)
+            self.object.transformation = self.last_trans
+            self.last_trans = self.object.transformation.copy()
+
+    def isAlive(self):
+        return self in self.main.entities
 
 class EntityRafale(Entity):
     def __init__(self,main, name = "Rafale"):
-        Entity.__init__(self, main, name = name, vao = main.vao_default['rafale'], texture = main.textures['rafale'])
-        self.addBounding_Boxe(BoundingBox(main,size = 0.15, offset = pyrr.Vector3([0,-0.15,-0.6])))
-        self.addBounding_Boxe(BoundingBox(main,size = 0.15, offset = pyrr.Vector3([0,-0.15,-0.3])))
-        self.addBounding_Boxe(BoundingBox(main,size = 0.15, offset = pyrr.Vector3([0,-0.15,0])))
-        self.addBounding_Boxe(BoundingBox(main,size = 0.15, offset = pyrr.Vector3([0,-0.15,0.3])))
-        self.addBounding_Boxe(BoundingBox(main,size = 0.15, offset = pyrr.Vector3([0,-0.15,0.6])))
-        self.max_speed = 2
-        self.speed = 0.0
-        self.min_speed = 0.0
-        self.acceleration = 0.006
+        Entity.__init__(self, main, name = name, vao = main.vao_default['rafale'], texture = main.textures['rafale_ghost'])
+        if not isinstance(self,EntityPlayer):
+            self.addBounding_Boxe(BoundingBox(main,size = 0.6, offset = pyrr.Vector3([0,-0.15,-0.3])))
+            self.addBounding_Boxe(BoundingBox(main,size = 0.6, offset = pyrr.Vector3([0,-0.15,0.3])))
+        self.max_speed = 1.5
+        self.speed = 0.3
+        self.min_speed = 0.3
+        self.acceleration = 0.003
         self.de_acceleration = self.acceleration/10
-        self.redressement_speed = 0.04
+        self.redressement_speed = 0.01
         self.de_redressement_speed = self.redressement_speed * 2
-        self.destroy_if_collide = True
+        self.destroy_if_collide = False
         # Tir à gauche ou droite
         self.last_shoot_side = False
-        self.object.transformation.rotation_euler[pyrr.euler.index().yaw] += np.pi
-
         # Gestion du pitch et roll
         self.pitch = 0
         self.roll = 0
         self.yaw = 0
+        self.score = 0
+        self.hide_bounding_box = True
+        self.object.render_mode = 0
 
     def render(self):
         Entity.render(self)
 
     def update(self):
+        if not isinstance(self,EntityPlayer):
+            d = self.main.player.object.transformation.translation - self.object.transformation.translation
+            d.normalize()
+            asin_dx = math.asin(d.x)
+            self.yaw = -math.acos(d.z)*(asin_dx)/(abs(asin_dx) if asin_dx != 0 else 1)
+            self.pitch = math.acos((math.sqrt(d.x*d.x+d.z*d.z)%1))*(d.y/(abs(d.y) if d.y != 0 else 1))
+            self.goForward()
         Entity.update(self)
         self.object.transformation.rotation_euler %= (2*math.pi)
         self.roll%= (2*math.pi)
         self.pitch %= (2*math.pi)
+        self.object.transformation.rotation_euler[pyrr.euler.index().yaw] = self.yaw
+        self.object.transformation.rotation_euler[pyrr.euler.index().roll] = math.cos(self.yaw)*math.sin(self.pitch)
+        self.object.transformation.rotation_euler[pyrr.euler.index().pitch] = math.sin(self.yaw)*math.sin(self.pitch)
+        self.last_trans = self.object.transformation.copy()
+
+    def getPosArray(self):
+        return [self.object.transformation.translation.x, self.object.transformation.translation.y, self.object.transformation.translation.z]
+
+    def collideEntity(self,ent):
+        super().collideEntity(ent)
+        if ent == self.main.ring:
+            self.passRing()
+
 
     def goForward(self):
-        self.object.transformation.translation += \
-            pyrr.matrix33.apply_to_vector(pyrr.matrix33.create_from_eulers(self.object.transformation.rotation_euler), pyrr.Vector3([0, 0,self.speed]))
+        if self.speed > 0:
+            self.object.transformation.translation += \
+                pyrr.matrix33.apply_to_vector(pyrr.matrix33.create_from_eulers(self.object.transformation.rotation_euler), pyrr.Vector3([0, 0,self.speed]))
+
+    def increaseSpeed(self):
+        if self.speed < self.max_speed:
+            self.speed += self.acceleration
+        else:
+            self.speed = self.max_speed
+
+    def decreaseSpeed(self):
+        if self.speed > self.min_speed:
+            self.speed -= 2*self.acceleration
+            if self.speed < self.min_speed:
+                self.speed = self.min_speed
+        else:
+            self.speed = self.min_speed
 
     def rotateUp(self):
         self.pitch += self.redressement_speed
@@ -302,103 +335,86 @@ class EntityRafale(Entity):
             self.pitch = 3*math.pi/2
 
     def rotateLeft(self):
-        self.roll += self.redressement_speed
+        self.yaw -= 0.03*self.speed
 
     def rotateRight(self):
-        self.roll -= self.redressement_speed
+        self.yaw += 0.03*self.speed
 
     def input(self):
         pass
 
     def shoot(self):
-        self.main.timer_debug.start("shoot")
         dir = pyrr.matrix33.apply_to_vector(pyrr.matrix33.create_from_eulers(self.object.transformation.rotation_euler), pyrr.Vector3([0, 0,1]))
         bullet = EntityBullet(self.main,self,dir)
         bullet.object.transformation.translation = self.object.transformation.translation + pyrr.matrix33.apply_to_vector(pyrr.matrix33.create_from_eulers(self.object.transformation.rotation_euler),  pyrr.Vector3([0.28 if self.last_shoot_side else -0.28 ,-0.18,-0.355]))
         bullet.object.transformation.rotation_euler = self.object.transformation.rotation_euler.copy();
         bullet.spawn()
-        # self.main.camera = Camera3P(self.main, entity=bullet)
         self.last_shoot_side = not self.last_shoot_side
-        self.main.timer_debug.end()
         return bullet
 
+    def respawn(self):
+        self.destroy()
+        self.center()
+        self.spawn()
+
+    def center(self):
+        x = -self.main.terrain.tile_size/2
+        z = x
+        y = self.main.terrain.getHeight(x,self.object.transformation.translation.y,z) + 10
+        self.object.transformation.translation = pyrr.Vector3([x, y, z])
+        self.last_trans = self.object.transformation.copy()
+
     def regulePitch(self):
-        if 3.14 > self.pitch > 0:
+        if math.pi > self.pitch > 0:
             self.rotateDown()
             if self.pitch < 0:
                     self.pitch = 0
-        elif self.pitch >= 3.14:
+        elif self.pitch >= math.pi:
             self.rotateUp()
-            if self.pitch > 6.28:
+            if self.pitch > 2*math.pi:
                     self.pitch = 0
-        # if self.pitch == 0:
-        #     pass
-        # elif self.pitch == math.pi:
-        #     pass
-        # elif 0 < self.pitch <= math.pi/2:
-        #     self.rotateDown()
-        #     if self.pitch < 0:
-        #         self.pitch = 0
-        # elif self.pitch <= math.pi:
-        #     self.rotateUp()
-        #     if self.pitch > math.pi:
-        #         self.pitch = math.pi
-        # elif self.pitch <= 3*math.pi/2:
-        #     self.rotateDown()
-        #     if self.pitch < math.pi:
-        #         self.pitch = math.pi
-        # elif self.pitch <= 2*math.pi:
-        #     self.rotateUp()
-        #     if self.pitch > 2*math.pi:
-        #         self.pitch = 0
 
     def reguleRoll(self):
         if self.roll == 0:
             pass
         elif self.roll == math.pi:
             pass
-        elif 0 < self.roll <= math.pi/2:
+        elif 0 < self.roll <= math.pi:
             self.rotateRight()
             if self.roll < 0:
                 self.roll = 0
-        elif self.roll <= math.pi:
-            self.rotateLeft()
-            if self.roll > math.pi:
-                self.roll = math.pi
-        elif self.roll <= 3*math.pi/2:
+        elif self.roll <= 2*math.pi:
             self.rotateRight()
             if self.roll < math.pi:
                 self.roll = math.pi
-        elif self.roll <= 2*math.pi:
-            self.rotateLeft()
-            if self.roll > 2*math.pi:
-                self.roll = 0
+
+    def passRing(self):
+        self.score += round((30 - self.main.ring.tick_alive/self.main.TICK_CAP)*1000/30,2)
+        self.main.generateRing()
 
 class EntityPlayer(EntityRafale):
     def __init__(self,main):
         EntityRafale.__init__(self,main, name = "Player")
-        self.object.transformation.rotation_euler[pyrr.euler.index().yaw] += np.pi
+        self.addBounding_Boxe(BoundingBox(main,size = 0.15, offset = pyrr.Vector3([0,-0.15,-0.6])))
+        self.addBounding_Boxe(BoundingBox(main,size = 0.15, offset = pyrr.Vector3([0,-0.15,-0.3])))
+        self.addBounding_Boxe(BoundingBox(main,size = 0.15, offset = pyrr.Vector3([0,-0.15,0])))
+        self.addBounding_Boxe(BoundingBox(main,size = 0.15, offset = pyrr.Vector3([0,-0.15,0.3])))
+        self.addBounding_Boxe(BoundingBox(main,size = 0.15, offset = pyrr.Vector3([0,-0.15,0.6])))
+        self.object.texture = main.textures['rafale']
         self.fire_rate = 1000.0/10
         self.last_shoot = self.main.msTime()
         self.gravity = 0.0001
         self.len_droite_dir = 100
         self.droite_dir = EntityCube(self.main,scaleVector=[0.1,0.1,self.len_droite_dir,1],obj_size=0.1)
         self.regulePitchVar = False
-
         self.hide_bounding_box = True
-        # self.object.render_mode = 1
-
-    def center(self):
-        x = -self.main.terrain.tile_size/2
-        z = x
-        y = self.main.terrain.getHeight(x,self.object.transformation.translation.y,z) + 2
-        self.object.transformation.translation = pyrr.Vector3([x, y, z])
-        self.last_trans = self.object.transformation.copy()
-
-    def respawn(self):
-        # self.destroy()
-        self.center
-        self.spawn()
+        self.easy_ctrl = False
+        self.object.render_mode = 0
+        self.speed = 0.0
+        self.min_speed = 0.0
+        self.collidable = True
+        self.can_be_collide = True
+        self.destroy_if_collide = True
 
     def destroy(self):
         super().destroy()
@@ -409,20 +425,17 @@ class EntityPlayer(EntityRafale):
         EntityRafale.render(self)
         self.droite_dir.render()
 
-
     def update(self):
+        self.goForward()
         EntityRafale.update(self)
+        # Gestion de la droite directrice des balles
         self.droite_dir.object.transformation = self.object.transformation.copy()
         mv = self.len_droite_dir*0.1
-        d = pyrr.Vector3([0.28 if self.last_shoot_side else -0.28 ,-0.18,-0.355])
+        d = pyrr.Vector3([0.28 if self.last_shoot_side else -0.28 ,-0.18,-0.4])
         self.droite_dir.object.transformation.translation.z += mv
         self.droite_dir.object.transformation.translation += d
         self.droite_dir.object.transformation.rotation_center.z -= mv
         self.droite_dir.object.transformation.rotation_center -= d
-        self.pitch %= 2*math.pi
-        self.main.player.object.transformation.rotation_euler[pyrr.euler.index().yaw] = self.yaw
-        self.main.player.object.transformation.rotation_euler[pyrr.euler.index().roll] = math.cos(self.yaw)*math.sin(self.pitch)
-        self.main.player.object.transformation.rotation_euler[pyrr.euler.index().pitch] = math.sin(self.yaw)*math.sin(self.pitch)
 
     def input(self):
         EntityRafale.input(self)
@@ -431,9 +444,12 @@ class EntityPlayer(EntityRafale):
                 self.shoot()
                 self.last_shoot = current_time
 
-
         if self.main.mouse_catched and self.main.keyIsPressedOne(glfw.KEY_M):
                 self.regulePitchVar = not self.regulePitchVar
+
+        # Ajout d'un point à la liste des check-points
+        if self.main.mouse_catched and self.main.keyIsPressedOne(glfw.KEY_K):
+                self.main.points.append(self.object.transformation.translation.copy())
 
         if self.main.KeyIsPressed(glfw.KEY_W):
             self.rotateDown()
@@ -444,30 +460,28 @@ class EntityPlayer(EntityRafale):
 
         if self.main.KeyIsPressed(glfw.KEY_LEFT):
             self.rotateLeft()
+
         elif self.main.KeyIsPressed(glfw.KEY_RIGHT):
             self.rotateRight()
-        # else:
-        #     self.reguleRoll()
 
         if self.main.KeyIsPressed(glfw.KEY_A):
-            self.yaw -= 0.1#*self.speed
+            self.rotateLeft()
 
         if self.main.KeyIsPressed(glfw.KEY_D):
-            self.yaw += 0.1#*self.speed
+            self.rotateRight()
 
         if self.main.KeyIsPressed(glfw.KEY_SPACE):
-            if self.speed < self.max_speed:
-                self.speed += self.acceleration
+            if self.easy_ctrl:
+                self.object.transformation.translation += \
+                    pyrr.matrix33.apply_to_vector(pyrr.matrix33.create_from_eulers(self.object.transformation.rotation_euler), pyrr.Vector3([0, 0,0.5]))
             else:
-                self.speed = self.max_speed
-
+                self.increaseSpeed()
         elif self.main.KeyIsPressed(glfw.KEY_LEFT_SHIFT):
-            if self.speed > self.min_speed:
-                self.speed -= 2*self.acceleration
-                if self.speed < self.min_speed:
-                    self.speed = self.min_speed
+            if self.easy_ctrl:
+                self.object.transformation.translation += \
+                    pyrr.matrix33.apply_to_vector(pyrr.matrix33.create_from_eulers(self.object.transformation.rotation_euler), pyrr.Vector3([0, 0,-0.5]))
             else:
-                self.speed = self.min_speed
+                self.decreaseSpeed()
         else:
             if self.speed > self.min_speed:
                 self.speed -= self.de_acceleration
@@ -478,9 +492,8 @@ class EntityPlayer(EntityRafale):
         # resistance = fct parabole centrée en pi/2 définie sur 0 - pi
         resistance = (1-(((2*(self.pitch%math.pi))/math.pi)-1)**2)
         self.speed -= 5*self.de_acceleration*resistance
-            # TODO Planer (gravité ?)
-            # self.object.transformation.translation += pyrr.Vector3([0, self.gravity,0])
-        self.goForward()
+        # TODO Planer (gravité ?)
+        # self.object.transformation.translation += pyrr.Vector3([0, self.gravity,0])
 
 class EntityBullet(Entity):
     def __init__(self,main,shooter,dir,scaleVector=[1,1,1,1],obj_size=0.01,real = True):
@@ -493,6 +506,7 @@ class EntityBullet(Entity):
         self.hide_bounding_box = True
         self.real = real
         self.destroy_if_collide = True
+        self.can_be_collide = False
 
     def render(self):
         Entity.render(self)
@@ -501,22 +515,15 @@ class EntityBullet(Entity):
         self.destroy()
 
     def update(self):
-        self.main.timer_debug.start("bullet update")
         Entity.update(self)
         if self.main.ticks_time - self.start_tick > self.tick_life:
-            print("life end")
             self.destroy()
         self.object.transformation.translation += self.direction*self.speed
-        self.main.timer_debug.start("collide h")
         if self.intersectHeight():
             self.object.transformation = self.last_trans
             self.last_trans = self.object.transformation.copy()
             self.collidWall()
-            self.main.timer_debug.end()
-            self.main.timer_debug.end()
             return
-        self.main.timer_debug.end()
-        self.main.timer_debug.start("collide e bullet")
         for ent in self.main.entities:
             if (not ent.collidable) or ent == self or (hasattr(self,'shooter') and self.shooter == ent):
                 continue
@@ -525,23 +532,37 @@ class EntityBullet(Entity):
                 if bounding_box:
                     pt = bounding_box.intersectDPoint(self.direction,self.object.transformation.translation)
                     print(pt)
-                    cube = EntityCube(self.main,obj_size = 0.05)
-                    cube.object.transformation.translation = pt
-                    cube.spawn()
                     self.object.transformation = self.last_trans
                     self.last_trans = self.object.transformation.copy()
                     self.destroy()
                     ent.hit(am = 50)
-                    self.main.timer_debug.end()
-                    self.main.timer_debug.end()
                     return
         self.last_trans = self.object.transformation.copy()
-        self.main.timer_debug.end()
-
-        self.main.timer_debug.end()
 
 class EntityCube(Entity):
-    def __init__(self,main,scaleVector=[1,1,1,1],obj_size=1, no_bounding_box=False):
+    def __init__(self,main, scaleVector=[1,1,1,1],obj_size=1, no_bounding_box=False):
         Entity.__init__(self, main, mesh = main.meshs["cube"], texture = main.textures['cube'], scaleVector=scaleVector, obj_size=obj_size, bounding_box_forced = not no_bounding_box)
         self.collidable = False
         self.hide_bounding_box = True
+
+class EntityRing(Entity):
+    def __init__(self,main,scaleVector=[1,1,1,1],obj_size=1, no_bounding_box=False):
+        Entity.__init__(self, main, name = 'ring', vao = main.vao_default["ring"], texture = main.textures['bullet'], scaleVector=scaleVector,obj_size=obj_size)
+        self.collidable = False
+        self.hide_bounding_box = True
+        self.can_be_collide = True
+        self.passs = False
+        self.general_bounding_box = BoundingBox(main, size = 3.5, offset = pyrr.Vector3([0,0,0]))
+        self.base_y = self.object.transformation.translation.y
+        self.offset_y = 0
+        self.transparent = True
+
+    def update(self):
+        if self.tick_alive > self.main.TICK_CAP * 30:
+            self.main.generateRing()
+        self.object.transformation.rotation_euler[pyrr.euler.index().yaw] +=0.1
+        self.offset_y += (0.05 if self.passs else -0.05)
+        self.object.transformation.translation.y = self.base_y + self.offset_y
+        if abs(self.offset_y) > 1:
+            self.passs = not self.passs
+        Entity.update(self)
