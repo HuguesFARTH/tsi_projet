@@ -20,11 +20,12 @@ import c_math
 class Main:
     def __init__(self):
         self.game_over = False
-        self.debug = False
+        self.debug = False # Si True plus rien ne s'affiche dans la console => fichier .log
         if self.debug:
             self.old_stdout = sys.stdout
             self.log_file = open("logs/logs_" + str(int(time.time())) + ".log","w+")
             sys.stdout = self.log_file
+
         self.last_ticks = 0
         self.last_frames = 0
         # Compte les ticks depuis le début du jeu
@@ -42,7 +43,7 @@ class Main:
         # TODO Liste des objects du monde
         self.blocks = []
 
-
+        
         self.initWindow()
         self.program3d_id = glutils.create_program_from_file('shader.vert', 'shader.frag')
         self.programGUI_id = glutils.create_program_from_file('gui.vert', 'gui.frag')

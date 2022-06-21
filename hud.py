@@ -167,5 +167,5 @@ class HudPlayerFonction(HudV2):
     def update(self):
         frames = round(self.main.last_frames,2)
         ticks = round(self.main.last_ticks,2)
-        self.value = self.lbd(self)#"Fps: " +str(frames) + ", Ticks: " + str(ticks)
+        self.value = self.lbd(self)
         super().update()
