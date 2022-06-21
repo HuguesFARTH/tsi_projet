@@ -1,4 +1,3 @@
-from viewerGL import ViewerGL
 import glutils
 from mesh import Mesh
 from cpe3d import Object3D, Camera, Transformation3D, Camera3P,Camera1P
@@ -43,7 +42,7 @@ class Main:
         # TODO Liste des objects du monde
         self.blocks = []
 
-        
+
         self.initWindow()
         self.program3d_id = glutils.create_program_from_file('shader.vert', 'shader.frag')
         self.programGUI_id = glutils.create_program_from_file('gui.vert', 'gui.frag')
@@ -109,7 +108,7 @@ class Main:
             for i in self.main.player.object.transformation.translation:
                 c = round(i,2)
                 coord.append(c)
-            return "Position: z" + str(coord[0])+" y:"+ str(coord[1])+" z:"+ str(coord[2])
+            return "Position: x" + str(coord[0])+" y:"+ str(coord[1])+" z:"+ str(coord[2])
 
         position = hud.HudPlayerFonction(self, "Altitude: ", altitude, np.array([-0.95, -0.95], np.float32), vao, 2, self.programGUI_id, texture)
         self.huds.append(position)

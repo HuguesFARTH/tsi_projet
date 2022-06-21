@@ -21,9 +21,6 @@ uniform vec4 translation_view;
 
 uniform mat4 projection;
 
-//test
-uniform vec3 posToSetRed;
-
 out vec3 coordonnee_3d;
 out vec3 coordonnee_3d_locale;
 out vec3 vnormale;
@@ -53,11 +50,8 @@ void main (void)
   vnormale=n.xyz;
 
   //Couleur du sommet
-  if(position == posToSetRed){
-    vcolor=vec4(vec3(1,0,0),1.0);
-  }else{
-    vcolor=vec4(color,1.0);
-  }
+  vcolor=vec4(color,1.0);
+
 
   //position dans l'espace ecran
   gl_Position = p_proj;

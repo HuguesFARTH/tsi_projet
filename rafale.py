@@ -1,4 +1,3 @@
-from viewerGL import ViewerGL
 import glutils
 from mesh import Mesh
 from cpe3d import Object3D, Camera, Transformation3D, Camera3P
@@ -112,7 +111,6 @@ class Entity():
         self.name = name
         tr = Transformation3D()
         self.texture = texture
-        self.collidable = True
         if vao == None or not mesh == None:
             self.mesh = mesh.copy()
             self.mesh.apply_matrix(pyrr.matrix44.create_from_scale(pyrr.Vector4(scaleVector)*obj_size))
@@ -132,6 +130,7 @@ class Entity():
         self.bounding_boxes = []
         self.last_trans = self.object.transformation.copy()
         self.life = 100
+        self.collidable = True
         self.hide_bounding_box = False
         self.destroy_if_collide = False
         self.can_be_collide = True
@@ -407,11 +406,11 @@ class EntityPlayer(EntityRafale):
         self.len_droite_dir = 100
         self.droite_dir = EntityCube(self.main,scaleVector=[0.1,0.1,self.len_droite_dir,1],obj_size=0.1)
         self.regulePitchVar = False
-        self.hide_bounding_box = True
+        self.hide_bounding_box = False
         self.easy_ctrl = False
         self.object.render_mode = 0
-        self.speed = 0.0
-        self.min_speed = 0.0
+        self.speed = 0.1
+        self.min_speed = 0.1
         self.collidable = True
         self.can_be_collide = True
         self.destroy_if_collide = True

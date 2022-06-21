@@ -29,9 +29,6 @@ class Terrain:
 
 
     def render(self):
-        # self.t.render()
-        # return
-        # return
         firstT = self.t.transformation.copy()
         self.t.render()
         self.t.transformation = firstT
@@ -43,8 +40,6 @@ class Terrain:
                 self.t.transformation.translation.x = x*self.tile_size
                 self.t.transformation.translation.z = z*self.tile_size
                 self.t.render()
-        # self.t.transformation.translation.x += self.tile_size
-        # self.t.transformation.rotation_euler[pyrr.euler.index().yaw]+=math.pi/300
 
     def getRawHeight(self,x_pos, z_pos, size):
         map = []
@@ -105,7 +100,6 @@ class Terrain:
         return vec
 
     def getHeightPixel(self, x, z):
-        # return 0
         if x >= self.heightmap_image.width or z >= self.heightmap_image.height or x < 0 or z < 0:
             return 0
         else:
@@ -130,7 +124,6 @@ class Terrain:
         x_coord = (terrain_x % grid_square_size)/self.tile_size
         z_coord = (terrain_z % grid_square_size)/self.tile_size
 
-        # vec = pyrr.Vector3([int(x),self.heights[gridX][gridZ],int(z)])
         GL.glUseProgram(self.t.program)
         loc = GL.glGetUniformLocation(self.t.program, "posToSetRed")
         if not (loc == -1) :
@@ -171,6 +164,7 @@ class Terrain:
         gridX2 = int((terrain_x)/grid_square_size)
         gridZ2 = int((terrain_z)/grid_square_size)
         if gridX + 1 >= len(self.heights) or gridZ + 1 >= len(self.heights) or gridZ- 1 < 0 or gridX - 1 < 0:
+            self.main.timer_debug.end()
             return 0
         x_coord = (terrain_x - (gridX2*grid_square_size)-0.5)%1
         z_coord = (terrain_z - (gridZ2*grid_square_size)-0.5)%1
