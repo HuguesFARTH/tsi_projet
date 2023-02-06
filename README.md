@@ -40,6 +40,7 @@ Les collisions terrain seront expliquées ultérieurement.
 
 `EntityBullet` :
 	Pour cette entité on doit refaire les collisions. En effet sa vitesse de déplacement importante il est peu optimiser de vérifier 60/s si elle touche quelque chose. On choisit donc de vérifier l’intersection entre une droite et une sphère. Quand elle touche une entité autre que son lanceur elle inflige 50 dégats.
+
 `EntityRafale`  :
 	Classe principale d’un rafale. Des boites de collision plus grande pour faciliter le touché, de nombreuses modifications excluant le joueur permettent de rendre cet avion invulnérable aux murs, suivant sans relâche le joueur où qu’il aille à vitesse constante. On peut relever différentes fonctions intéressantes : goForward permettant au rafale d’avancer dans la direction où il regarde, la fonction shoot lui faisant tirer une balle, regulePitch permettant de redresser automatiquement l’avion à l’horizontale (utile pour le joueur)
 
@@ -51,3 +52,19 @@ Les collisions terrain seront expliquées ultérieurement.
 `EntityRing`
 	Anneau qui si traversé par un joueur lui augmente le score. Plus l’anneau reste longtemps sur le terrain moins il donne de points.
 
+## Terrain
+
+Cette classe gère l’affichage du terrain, sa création à partir d’une image (heightmap), sauvegarde les différentes hauteurs et gère les collisions avec le terrain. Pour cela on cherche à calculer l’intersection entre un plan (triangle à la position), et la droite de direction (0,1,0) on récupère ainsi la hauteur du terrain localement.
+Cette capture illustre la génération de montagnes de façon simple, réagissant bien aux ombres
+
+## OBJECT3D
+
+Une classe comprenant toutes les informations nécessaires à l’affichage d’un objet : sa transformation (translation, rotation) ainsi que sa texture, son vao et son nombre de triangles.
+
+## TIMERDEBUG
+
+Classe utilitaire permettant de faire du debug de temps d’exécution de fonctions
+
+##CONCLUSION
+
+Ce projet nous a permis de faire un premier pas dans la conception de jeux en 3D avec OpenGl. On y a appris à gérer une caméra, ses différents angles de vus, utiliser les shaders pour afficher les objets selon la caméra. Les fonctions mises à notre disposition nous ont permis de charger les textures, les .obj et de les instancier dans le gpu pour une utilisation simplifiée par la suite, permettant une réutilisation intelligente. On a pu apprendre les bases sur les huds, les collisions dans un environnement 3D, l’interaction avec les entrées clavier/souris et la notion de projectiles.
