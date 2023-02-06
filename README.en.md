@@ -1,5 +1,5 @@
 # Projet Traitement et Synthèse d'Image
-_Langues: [Français](README.md), [Anglais](README.en.md)_
+_Languages: [French](README.md), [English](README.en.md)_
 
 ## Introduction
 The objective of this project is to create a minimalist game using the OpenGL language. To do this, we will develop the game in python using the python library of OpenGL, OpenGL.GL. We have chosen to develop a small fighter plane game. So we embody a plane that moves on a map and passes through circles placed on the map. There is also another plane that tries to crash into us and we have to kill it before that happens. We must also avoid colliding with our environment, otherwise it's "game over".
@@ -44,32 +44,27 @@ The game capture shows the different collision boxes of the player, a large one 
 Terrain collisions will be explained later.
 
 `EntityBullet` :
-	Pour cette entité on doit refaire les collisions. En effet sa vitesse de déplacement importante il est peu optimiser de vérifier 60/s si elle touche quelque chose. On choisit donc de vérifier l’intersection entre une droite et une sphère. Quand elle touche une entité autre que son lanceur elle inflige 50 dégats.
+For this entity, we need to redo the collisions. Indeed, its high movement speed makes it not optimal to check 60 times per second if it hits anything. So we choose to check the intersection between a line and a sphere. When it hits an entity other than its launcher, it deals 50 damage.
 
-`EntityRafale`  :
-	Classe principale d’un rafale. Des boites de collision plus grande pour faciliter le touché, de nombreuses modifications excluant le joueur permettent de rendre cet avion invulnérable aux murs, suivant sans relâche le joueur où qu’il aille à vitesse constante. On peut relever différentes fonctions intéressantes : goForward permettant au rafale d’avancer dans la direction où il regarde, la fonction shoot lui faisant tirer une balle, regulePitch permettant de redresser automatiquement l’avion à l’horizontale (utile pour le joueur)
+`EntityRafale`:
+Main class of a rafale. Larger collision boxes to make it easier to hit, many modifications excluding the player allow the aircraft to be invulnerable to walls, continuously following the player wherever he goes at a constant speed. We can notice different interesting functions: goForward allowing the rafale to move forward in the direction it is facing, the shoot function making it shoot a bullet, and regulatePitch automatically straightening the aircraft horizontally (useful for the player)
 
 `EntityPlayer`:
-	Hérite de EntityRafal mais contient principalement la partie input (déplacements, tir, ajout d’un anneau, activation/désactivation de la régulation du pitch).
-	Le joueur étant le seul avion à pouvoir tirer pour le moment, tire les balles dans la direction où il regarde de part et d’autre d’où il regarde. Une ligne noire permet d’observer la direction que prendrons les projectiles.
-
+Inherits from EntityRafale but mainly contains the input part (movements, shooting, adding a ring, activation/deactivation of pitch regulation).
+The player is the only aircraft that can shoot for now, shooting bullets in the direction it is facing on either side of where it is facing. A black line allows observing the direction the projectiles will take.
 
 `EntityRing`
-	Anneau qui si traversé par un joueur lui augmente le score. Plus l’anneau reste longtemps sur le terrain moins il donne de points.
+A ring that if crossed by a player increases their score. The longer the ring stays on the field, the less points it gives.
 
 ## Terrain
-
-Cette classe gère l’affichage du terrain, sa création à partir d’une image (heightmap), sauvegarde les différentes hauteurs et gère les collisions avec le terrain. Pour cela on cherche à calculer l’intersection entre un plan (triangle à la position), et la droite de direction (0,1,0) on récupère ainsi la hauteur du terrain localement.
-Cette capture illustre la génération de montagnes de façon simple, réagissant bien aux ombres
+This class manages the display of the terrain, its creation from an image (heightmap), saves the different heights and manages collisions with the terrain. To do this, we aim to calculate the intersection between a plane (triangle at the position) and the direction line (0,1,0), thus locally retrieving the height of the terrain.
+This capture illustrates the simple generation of mountains, reacting well to shadows.
 
 ## Object3D
-
-Une classe comprenant toutes les informations nécessaires à l’affichage d’un objet : sa transformation (translation, rotation) ainsi que sa texture, son vao et son nombre de triangles.
+A class containing all the information necessary to display an object: its transformation (translation, rotation) and its texture, vao, and number of triangles.
 
 ## timerDebug
-
-Classe utilitaire permettant de faire du debug de temps d’exécution de fonctions
+Utility class for debugging time of function execution.
 
 ## Conclusion
-
-Ce projet nous a permis de faire un premier pas dans la conception de jeux en 3D avec OpenGl. On y a appris à gérer une caméra, ses différents angles de vus, utiliser les shaders pour afficher les objets selon la caméra. Les fonctions mises à notre disposition nous ont permis de charger les textures, les .obj et de les instancier dans le gpu pour une utilisation simplifiée par la suite, permettant une réutilisation intelligente. On a pu apprendre les bases sur les huds, les collisions dans un environnement 3D, l’interaction avec les entrées clavier/souris et la notion de projectiles.
+This project allowed us to take our first step into the design of 3D games with OpenGl. We learned how to manage a camera, its different viewing angles, use shaders to display objects according to the camera. The functions made available to us allowed us to load textures, .obj and instance them in the GPU for simplified use later, allowing for intelligent reuse. We were able to learn the basics of HUDs, collisions in a 3D environment, interaction with keyboard/mouse inputs and the notion of projectiles.
