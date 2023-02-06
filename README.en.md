@@ -1,4 +1,4 @@
-# Projet Traitement et Synthèse d'Image
+# Image Processing and Synthesis
 _Languages: [French](README.md), [English](README.en.md)_
 
 ## Introduction
@@ -12,23 +12,23 @@ As for the main shader, allowing the display of entities, terrain and others, we
 We also added a kind of fog, the further the vertex is from the camera, the more it will blend with the color of the sky. So we have a horizon impression.
 
 ## Objects
-### Main
+### [Main](main.py)
 It is the main object of the game, managing the instantiation of different entities, their updates, renderings, keyboard/mouse input.
 The loop function is the project's loop. It manages when to update the display, update the entities while keeping the FPS and TICK (update/s) limits as stable as possible that are defined for it.
 The loadMeshAndTexture function allows loading the different models/textures that will be used, generating the meshes and vao. This avoids instantiating the same model multiple times in the GPU.
 There are also many other functions that can 'catch' the mouse, make an Ring appear, a Ghost Burst, display the end hud.
 In the initialization we generate the terrain, the player, the cameras, the initialization of the window, the shaders, the different huds...
 
-### Camera
+### [Camera](cpe3d.py#72)
 
 This is a virtual camera, symbolizing the location that should be displayed on the screen. It can undergo translations and rotations. In the shader, each object refers to the camera. Camera3P is inherited from Camera. Camera3P is a camera with its rotation center at the object being targeted (for example the player). This way, you can turn around the entity independently of its movements, move away or closer while keeping the "view" fixed on the latter.
 
-### HudPlayerFonction
+### [HudPlayerFonction](hud.py#162)
 
 This is an object for displaying text on the screen. It inherits from HudV2, which is a modified version of the provided Hud. As a parameter, it is given a function that returns what should be displayed every tick. For display, like Hud, we define which shader we give the texture number, we send the different variables to the shader, and finally display the text with 2 triangles.
 This object allows us to display real-time score, position, and several other information on the screen directly. It is also possible to define the text size.
 
-### Entity
+### [Entity](rafale.py)
 
 This is a class for all entities, it groups information, stores different variables specific to each entity (texture, vao), and creates the object.
 We also define collision boxes (here they are spheres) which will later help us manage the different collisions with the terrain and other entities:
@@ -43,7 +43,7 @@ Regarding collisions, it is sufficient to check for each box if the distance wit
 The game capture shows the different collision boxes of the player, a large one to make a first rough test, and smaller ones for precision.
 Terrain collisions will be explained later.
 
-`EntityBullet` :
+[`EntityBullet`](entity.py#497) :
 For this entity, we need to redo the collisions. Indeed, its high movement speed makes it not optimal to check 60 times per second if it hits anything. So we choose to check the intersection between a line and a sphere. When it hits an entity other than its launcher, it deals 50 damage.
 
 `EntityRafale`:
