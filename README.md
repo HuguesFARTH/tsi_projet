@@ -25,3 +25,29 @@ Il s’agit d’une caméra virtuelle, symbolisant l’emplacement qui doit êtr
 Il s’agit d’un objet permettant d’afficher du texte à l’écran. Il hérite de HudV2 qui est une version modifiée du Hud fournit. En paramètre on lui donne une fonction retournant ce qui doit être affiché tous les ticks. Pour l’affichage, de la même manière que Hud on définit quel shader on lui donne le numéro de texture, on envoie vers le shader les différentes variables puis enfin on affiche le texte avec 2 triangles.
 Cet objet nous permet d’afficher en temps réel le score, la position, ainsi que plusieurs autres informations à l’écran directement. Il est également possible de définir la taille du texte.
 
+### Entity
+
+Toutes les entités en héritent, cette classe permet de regrouper les informations, stocker les différentes variables propre à chaque entité (texture,vao), de créer l’objet.
+On définit également des boites de collision (ici il s’agit de sphères) qui nous permettrons par la suite de gérer les différentes collisions avec le terrain, les autres entités :
+* self.collidable : l’entité gère les collisions
+* self.hide_bounding_box : cacher ou non les boites de collision
+* self.destroy_if_collide : l’entité est détruite si elle touche quelque-chose
+* self.can_be_collide : l’entité peut recevoir une collision
+* self.transparent : l’entité peut recevoir une collision mais n’est pas solide (peut passer à travers)
+Pour ce qui est des collisions il suffit de vérifier pour chaque box si la distance avec la box de l’autre entité est inférieure aux deux rayons.
+La capture du jeu montre les différentes boites de collision du joueur, une grande afin de faire un premier teste grossier, puis des plus petites pour la précision.
+Les collisions terrain seront expliquées ultérieurement.
+
+`EntityBullet` :
+	Pour cette entité on doit refaire les collisions. En effet sa vitesse de déplacement importante il est peu optimiser de vérifier 60/s si elle touche quelque chose. On choisit donc de vérifier l’intersection entre une droite et une sphère. Quand elle touche une entité autre que son lanceur elle inflige 50 dégats.
+`EntityRafale`  :
+	Classe principale d’un rafale. Des boites de collision plus grande pour faciliter le touché, de nombreuses modifications excluant le joueur permettent de rendre cet avion invulnérable aux murs, suivant sans relâche le joueur où qu’il aille à vitesse constante. On peut relever différentes fonctions intéressantes : goForward permettant au rafale d’avancer dans la direction où il regarde, la fonction shoot lui faisant tirer une balle, regulePitch permettant de redresser automatiquement l’avion à l’horizontale (utile pour le joueur)
+
+`EntityPlayer`:
+	Hérite de EntityRafal mais contient principalement la partie input (déplacements, tir, ajout d’un anneau, activation/désactivation de la régulation du pitch).
+	Le joueur étant le seul avion à pouvoir tirer pour le moment, tire les balles dans la direction où il regarde de part et d’autre d’où il regarde. Une ligne noire permet d’observer la direction que prendrons les projectiles.
+
+
+`EntityRing`
+	Anneau qui si traversé par un joueur lui augmente le score. Plus l’anneau reste longtemps sur le terrain moins il donne de points.
+
