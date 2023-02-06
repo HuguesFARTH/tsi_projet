@@ -1,7 +1,7 @@
 # Projet Traitement et Synthèse d'Image
 ## Introduction
 L’objectif de ce projet est de réaliser un jeu minimaliste avec le langage OpenGL. Pour cela, nous développerons le jeu en python en utilisant la libraire python d’OpenGL, OpenGL.GL. Nous avons fait le choix de développer un petit jeu d’avion de chasse. On incarne donc un avion qui se déplace dans une carte et qui passer à travers des cercles placés sur la carte. Il existe également un autre avion qui essaye de nous foncer dessus et que nous devons tuer avant que ça n’arrive. On doit également éviter de rentrer en collision avec notre environnement, car sinon c’est « game over ».
-## OPENGL/SHADERS
+## Opengl/Shaders
 OpenGL est un ensemble normalisé de fonctions de calcul d'images 2D ou 3D lancé en 1992. OpenGL permet à un programme d’afficher des objets tridimensionnels à l’écran en tenant compte de la distance, l’orientation, les ombres, la transparence… . 
 Pour ce faire, OpenGL utilise deux types de shaders afin de créer des triangles. Ces triangles sont la base de tout objet, que ce soit une map, une sphère ou un avion. Il y a tout d’abord un vertex shader qui va créer les sommets des triangles et calculer leur position dans l’environnement 3d. Ensuite, le fragment shader s’occupe de remplir ces triangles d’un certaine couleur, texture … .
 Nous avons créé deux couples de shader (vertex et fragment) : l’un est utilisé pour gérer l’affichage 3d et l’ensemble du jeu, c’est le shader principal. Le second couple affiche à l’écran les données du jeu (altitude, position, vitesse de l’avion…).
