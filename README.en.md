@@ -19,11 +19,11 @@ The loadMeshAndTexture function allows loading the different models/textures tha
 There are also many other functions that can 'catch' the mouse, make an Ring appear, a Ghost Burst, display the end hud.
 In the initialization we generate the terrain, the player, the cameras, the initialization of the window, the shaders, the different huds...
 
-### [Camera](cpe3d.py#72)
+### [Camera](cpe3d.py#L72)
 
 This is a virtual camera, symbolizing the location that should be displayed on the screen. It can undergo translations and rotations. In the shader, each object refers to the camera. Camera3P is inherited from Camera. Camera3P is a camera with its rotation center at the object being targeted (for example the player). This way, you can turn around the entity independently of its movements, move away or closer while keeping the "view" fixed on the latter.
 
-### [HudPlayerFonction](hud.py#162)
+### [HudPlayerFonction](hud.py#L162)
 
 This is an object for displaying text on the screen. It inherits from HudV2, which is a modified version of the provided Hud. As a parameter, it is given a function that returns what should be displayed every tick. For display, like Hud, we define which shader we give the texture number, we send the different variables to the shader, and finally display the text with 2 triangles.
 This object allows us to display real-time score, position, and several other information on the screen directly. It is also possible to define the text size.
@@ -43,27 +43,27 @@ Regarding collisions, it is sufficient to check for each box if the distance wit
 The game capture shows the different collision boxes of the player, a large one to make a first rough test, and smaller ones for precision.
 Terrain collisions will be explained later.
 
-[`EntityBullet`](entity.py#497) :
+[`EntityBullet`](rafale.py#L497) :
 For this entity, we need to redo the collisions. Indeed, its high movement speed makes it not optimal to check 60 times per second if it hits anything. So we choose to check the intersection between a line and a sphere. When it hits an entity other than its launcher, it deals 50 damage.
 
-`EntityRafale`:
+[`EntityRafale`](rafale.py#L254):
 Main class of a rafale. Larger collision boxes to make it easier to hit, many modifications excluding the player allow the aircraft to be invulnerable to walls, continuously following the player wherever he goes at a constant speed. We can notice different interesting functions: goForward allowing the rafale to move forward in the direction it is facing, the shoot function making it shoot a bullet, and regulatePitch automatically straightening the aircraft horizontally (useful for the player)
 
-`EntityPlayer`:
+[`EntityPlayer`](rafale.py#L394):
 Inherits from EntityRafale but mainly contains the input part (movements, shooting, adding a ring, activation/deactivation of pitch regulation).
 The player is the only aircraft that can shoot for now, shooting bullets in the direction it is facing on either side of where it is facing. A black line allows observing the direction the projectiles will take.
 
-`EntityRing`
+[`EntityRing`](rafale.py#L547)
 A ring that if crossed by a player increases their score. The longer the ring stays on the field, the less points it gives.
 
-## Terrain
+## [Terrain](terrain.py)
 This class manages the display of the terrain, its creation from an image (heightmap), saves the different heights and manages collisions with the terrain. To do this, we aim to calculate the intersection between a plane (triangle at the position) and the direction line (0,1,0), thus locally retrieving the height of the terrain.
 This capture illustrates the simple generation of mountains, reacting well to shadows.
 
-## Object3D
+## [Object3D](cpe3d.py#L35)
 A class containing all the information necessary to display an object: its transformation (translation, rotation) and its texture, vao, and number of triangles.
 
-## timerDebug
+## [timerDebug](timeDebug.py)
 Utility class for debugging time of function execution.
 
 ## Conclusion
