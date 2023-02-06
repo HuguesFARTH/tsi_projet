@@ -20,7 +20,7 @@ Dans l’initialisation on y génère le terrain, le joueur, les caméras, l’i
 
 Il s’agit d’une caméra virtuelle, symbolisant l’emplacement qui doit être rendu à l’écran. Elle peut subir des translations et des rotations. Dans le schader chaque objet a pour référence la caméra. Camera3P est hérité de Camera. Camera3P est une caméra avec pour centre de rotation celui de l’objet visé (par exemple le joueur). On peut ainsi tourner autour de l’entité indépendamment de ses mouvements à elle, s’éloigner ou se rapprocher tout en gardant le « regard » fixé sur ce dernier. 
 
-### HUDPLAYERFONCTION
+### HudPlayerFonction
 
 Il s’agit d’un objet permettant d’afficher du texte à l’écran. Il hérite de HudV2 qui est une version modifiée du Hud fournit. En paramètre on lui donne une fonction retournant ce qui doit être affiché tous les ticks. Pour l’affichage, de la même manière que Hud on définit quel shader on lui donne le numéro de texture, on envoie vers le shader les différentes variables puis enfin on affiche le texte avec 2 triangles.
 Cet objet nous permet d’afficher en temps réel le score, la position, ainsi que plusieurs autres informations à l’écran directement. Il est également possible de définir la taille du texte.
@@ -57,14 +57,14 @@ Les collisions terrain seront expliquées ultérieurement.
 Cette classe gère l’affichage du terrain, sa création à partir d’une image (heightmap), sauvegarde les différentes hauteurs et gère les collisions avec le terrain. Pour cela on cherche à calculer l’intersection entre un plan (triangle à la position), et la droite de direction (0,1,0) on récupère ainsi la hauteur du terrain localement.
 Cette capture illustre la génération de montagnes de façon simple, réagissant bien aux ombres
 
-## OBJECT3D
+## Object3D
 
 Une classe comprenant toutes les informations nécessaires à l’affichage d’un objet : sa transformation (translation, rotation) ainsi que sa texture, son vao et son nombre de triangles.
 
-## TIMERDEBUG
+## timerDebug
 
 Classe utilitaire permettant de faire du debug de temps d’exécution de fonctions
 
-##CONCLUSION
+## Conclusion
 
 Ce projet nous a permis de faire un premier pas dans la conception de jeux en 3D avec OpenGl. On y a appris à gérer une caméra, ses différents angles de vus, utiliser les shaders pour afficher les objets selon la caméra. Les fonctions mises à notre disposition nous ont permis de charger les textures, les .obj et de les instancier dans le gpu pour une utilisation simplifiée par la suite, permettant une réutilisation intelligente. On a pu apprendre les bases sur les huds, les collisions dans un environnement 3D, l’interaction avec les entrées clavier/souris et la notion de projectiles.
