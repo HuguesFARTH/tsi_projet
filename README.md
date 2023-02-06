@@ -1,4 +1,6 @@
 # Projet Traitement et Synthèse d'Image
+_Langues: [Français](README.md), [Anglais](README.en.md)_
+
 ## Introduction
 L’objectif de ce projet est de réaliser un jeu minimaliste avec le langage OpenGL. Pour cela, nous développerons le jeu en python en utilisant la libraire python d’OpenGL, OpenGL.GL. Nous avons fait le choix de développer un petit jeu d’avion de chasse. On incarne donc un avion qui se déplace dans une carte et qui passer à travers des cercles placés sur la carte. Il existe également un autre avion qui essaye de nous foncer dessus et que nous devons tuer avant que ça n’arrive. On doit également éviter de rentrer en collision avec notre environnement, car sinon c’est « game over ».
 ## Opengl/Shaders
